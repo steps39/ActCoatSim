@@ -1,5 +1,5 @@
 var g_nextExample = "";
-var g_currentExample = "";
+var g_currentExample = "leaching";
 var frames = 0;
 var world;
 var leachProgress = [];
@@ -11,40 +11,128 @@ var firstTime, g_endFraction;
 var g_running = true;
 var g_globalPlots = false;
 var maxFrames, maxLeached;
-var g_topwater,
-  g_topcoat,
-  g_scribed,
-  g_topLeak,
-  g_sideLeak,
-  g_bottomLeak,
-  g_manualInter,
-  g_gridFromCA,
-  g_xSqrt;
-var inhibitorSolubility,
-  inhibitorDensity,
-  maximumParticle,
-  minimumParticle,
-  maximumPVC,
-  minimumPVC,
-  coatingNo;
-var inhibitorAccessible, inhibitorTotal;
+var g_topwater, g_topcoat, g_scribed, g_topLeak, g_sideLeak, g_bottomLeak, g_manualInter, g_gridFromCA, g_xSqrt, g_quickFinish;
+var inhibitorSolubility, inhibitorDensity, maximumParticle, minimumParticle, maximumPVC, minimumPVC, coatingNo, inhibitorAccessible, inhibitorTotal;
 var loopFinished = false;
 var allStuff = [];
 var firstTime = true;
-var myCanvas, ctx, renderer, stage, meter, textures, pixels, noSamples, pixiVersion;
-//var ctx, renderer, stage, meter, textures, pixels, noSamples, pixiVersion;
-//const myCanvas = document.getElementById("myCanvas");
-//canvasrecorder const recorder = new CanvasRecorder(myCanvas);
-//var capturer = new CCapture( { display: true, format: 'webm', framerate: 1, verbose: true } );
-//var capturer = new CCapture( { display: false, format: 'webm', verbose: true } );
-var capturer = null;
+var myCanvas, myPlot, ctx, renderer, stage, meter, textures, pixels, noSamples, pixiVersion, fileNameStem;
+var gridCapturer = null;
+var plotCapturer = null;
+var plotPlot;
+var fileNameStem;
+var legendContainer = document.getElementById("Legend");
 let ccOptions = {
   /* Recording options */
-  format: 'webm',
-  framerate: '30FPS',
-  start: function(){ startRecording(); },
-  stop: function(){ stopRecording(); }
+  format: "webm",
+  framerate: "30FPS",
+  start: function () {
+    startRecording();
+  },
+  stop: function () {
+    stopRecording();
+  },
 };
+
+function startRecording(fileNameStem,coatingNo) {
+  var lcapturer;
+  lcapturer = new CCapture({
+    name: fileNameStem + (coatingNo + 1),
+    verbose: false,
+    display: false,
+    framerate: parseInt(ccOptions.framerate),
+    motionBlurFrames: 0,
+    quality: 100,
+    format: ccOptions.format,
+    workersPath: "dist/src/",
+    timeLimit: 0,
+    frameLimit: 0,
+    autoSaveTime: 0,
+  });
+  lcapturer.start();
+  return lcapturer;
+}
+
+function stopRecording(lcapturer){
+  lcapturer.stop();
+  lcapturer.save();
+}
+
+function zeroNumber(item) {
+  let sitem = item.toString();
+  if (item < 10) {
+    sitem = "0" + sitem;
+  }
+  return sitem;
+}
+
+function generateFileNameStem() {
+  let d = new Date();
+  let name =
+    zeroNumber(d.getFullYear() % 100) +
+    zeroNumber(d.getMonth() + 1) +
+    zeroNumber(d.getDate()) +
+    zeroNumber(d.getHours()) +
+    zeroNumber(d.getMinutes());
+  if (g_gridFromCA) {
+    name += "CA";
+  } else {
+    name += "PP";
+  }
+  if (g_manualInter) {
+    name += "M";
+  }
+  name +=
+    "grid" +
+    "PS" +
+    Math.round(100 * minimumPVC) +
+    "PL" +
+    Math.round(100 * maximumPVC);
+  return name;
+}
+
+function changeInt(htmlObject) {
+  return parseInt($(htmlObject).val(), 10);
+}
+
+function changeFloat(htmlObject) {
+  return parseFloat($(htmlObject).val(), 10);
+}
+
+function changeCheck(htmlObject) {
+  return $(htmlObject).prop("checked");
+}
+
+function updateFromPage() {
+  g_stepFrames = changeInt("#numFrames");
+  g_plotFrames = changeInt("#numPlots");
+  depthOfWater = changeInt("#depthofwater");
+  depthOfTopcoat = changeInt("#depthoftopcoat");
+  sizeOfScribe = changeInt("#sizeofscribe");
+  inhibitorDensity = changeInt("#inhibitordensity");
+  inhibitorSolubility = changeInt("#inhibitorsolubility");
+  probDiffusion = changeFloat("#probdiff");
+  probSolubility = changeFloat("#probsol");
+  g_topwater = changeCheck("#waterontop");
+  g_topcoat = changeCheck("#topcoated");
+  g_gridFromCA = changeCheck("#gridfromca");
+  g_manualInter = changeCheck("#manualinter");
+  g_scribed = changeCheck("#scribed");
+  noStrucSteps = changeInt("#nostrucsteps");
+  g_endFraction = changeFloat("#endfraction");
+  minimumPVC = changeFloat("#minimumpvc");
+  maximumPVC = changeFloat("#maximumpvc");
+  minimumParticle = changeInt("#minparticle");
+  maximumParticle = changeInt("#maxparticle");
+  g_stepFrames = parseInt($("#numFrames").val(), 10);
+  g_noUpdates = changeCheck("#noupdates");
+  g_globalPlots = changeCheck("#plotCheckbox");
+  g_xSqrt = changeCheck("#xsqrt");
+  g_topLeak = changeCheck("#topleak");
+  g_sideLeak = changeCheck("#sideleak");
+  g_bottomLeak = changeCheck("#bottomleak");
+  noSamples = changeInt("#nocoatings");
+}
 
 window.onload = function () {
   // Check for the various File API support.
@@ -58,7 +146,7 @@ window.onload = function () {
   $(".exampleLink").on("click", function (evt) {
     multipleLeaches = [];
     loadExample($(this).attr("data-example"));
-//?    g_running = 1;
+    //?    g_running = 1;
   });
   $("#btnReload").on("click", function (evt) {
     reloadExample(g_currentExample);
@@ -67,7 +155,7 @@ window.onload = function () {
     changeRunningState();
   });
   $("#btnStart").on("click", function (evt) {
-    multipleLeaches = [];
+    updateFromPage();
     loadExample(g_currentExample);
     //?g_running = 1;
   });
@@ -77,65 +165,14 @@ window.onload = function () {
   $("#btnReloadData").on("click", function (evt) {
     reloadData();
   });
- /* $("#numFrames").on("change", function (evt) {
+  $("#endfraction").on("change", function (evt) {
+    g_endFraction = changeFloat("#endfraction");
+  });
+  $("#numFrames").on("change", function (evt) {
     g_stepFrames = changeInt("#numFrames");
   });
   $("#numPlots").on("change", function (evt) {
     g_plotFrames = changeInt("#numPlots");
-  });
-  $("#depthofwater").on("change", function (evt) {
-    depthOfWater = changeInt("#depthofwater");
-  });
-  $("#depthoftopcoat").on("change", function (evt) {
-    depthOfTopcoat = changeInt("#depthoftopcoat");
-  });
-  $("#sizeofscribe").on("change", function (evt) {
-    sizeOfScribe = changeInt("#sizeofscribe");
-  });
-  $("#inhibitordensity").on("change", function (evt) {
-    inhibitorDensity = changeInt("#inhibitordensity");
-  });
-  $("#inhibitorsolubility").on("change", function (evt) {
-    inhibitorSolubility = changeInt("#inhibitorsolubility");
-  });
-  $("#probdiff").on("change", function (evt) {
-    probDiffusion = changeFloat("#probdiff");
-  });
-  $("#probsol").on("change", function (evt) {
-    probSolubility = changeFloat("#probsol");
-  });
-  $("#waterontop").on("change", function (evt) {
-    g_topwater = changeCheck("#waterontop");
-  });
-  $("#topcoated").on("change", function (evt) {
-    g_topcoat = changeCheck("#topcoated");
-  });
-  $("#gridfromca").on("change", function (evt) {
-    g_gridFromCA = changeCheck("#gridfromca");
-  });
-  $("#manualinter").on("change", function (evt) {
-    g_manualInter = changeCheck("#manualinter");
-  });
-  $("#scribed").on("change", function (evt) {
-    g_scribed = changeCheck("#scribed");
-  });
-  $("#nostrucsteps").on("change", function (evt) {
-    noStrucSteps = changeInt("#nostrucsteps");
-  });
-  $("#endfraction").on("change", function (evt) {
-    g_endFraction = changeFloat("#endfraction");
-  });
-  $("#minimumpvc").on("change", function (evt) {
-    minimumPVC = changeFloat("#minimumpvc");
-  });
-  $("#maximumpvc").on("change", function (evt) {
-    maximumPVC = changeFloat("#maximumpvc");
-  });
-  $("#minparticle").on("change", function (evt) {
-    minimumParticle = changeInt("#minparticle");
-  });
-  $("#maxparticle").on("change", function (evt) {
-    maximumParticle = changeInt("#maxparticle");
   });
   $("#noupdates").on("change", function (evt) {
     g_noUpdates = changeCheck("#noupdates");
@@ -146,69 +183,14 @@ window.onload = function () {
   $("#xsqrt").on("change", function (evt) {
     g_xSqrt = changeCheck("#xsqrt");
   });
-  $("#topleak").on("change", function (evt) {
-    g_topLeak = changeCheck("#topleak");
+  $("#quickfinish").on("change", function (evt) {
+    g_quickFinish = changeCheck("#quickfinish");
   });
-  // = $("").prop("checked");
-  $("#sideleak").on("change", function (evt) {
-    g_sideLeak = changeCheck("#sideleak");
-  });
-  // = $("").prop("checked");
-  $("#bottomleak").on("change", function (evt) {
-    g_bottomLeak = changeCheck("#bottomleak");
-  });
-  $("#nocoatings").on("change", function (evt) {
-    noSamples = changeInt("#nocoatings");
-  });
-*/
-  function changeInt(htmlObject) {
-    return parseInt($(htmlObject).val(), 10);
-  }
-
-  function changeFloat(htmlObject) {
-    return parseFloat($(htmlObject).val(), 10);
-  }
-
-  function changeCheck(htmlObject) {
-    return $(htmlObject).prop("checked");
-  }
-
-  noSamples = parseInt($("#nocoatings").val(), 10);
-  depthOfWater = parseInt($("#depthofwater").val(), 10);
-  depthOfTopcoat = parseInt($("#depthoftopcoat").val(), 10);
-  sizeOfScribe = parseInt($("#sizeofscribe").val(), 10);
-  inhibitorDensity = parseInt($("#inhibitordensity").val(), 10);
-  inhibitorSolubility = parseInt($("#inhibitorsolubility").val(), 10);
-  probDiffusion = parseFloat($("#probdiff").val());
-  probSolubility = parseFloat($("#probsol").val());
-  g_topwater = $("#waterontop").prop("checked");
-  g_topcoat = $("#topcoated").prop("checked");
-  g_gridFromCA = $("#gridfromca").prop("checked");
-  g_manualInter = $("#manualinter").prop("checked");
-  g_scribed = $("#scribed").prop("checked");
-  minimumPVC = parseFloat($("#minimumpvc").val());
-  maximumPVC = parseFloat($("#maximumpvc").val());
-  minimumParticle = parseInt($("#minparticle").val());
-  maximumParticle = parseInt($("#maxparticle").val());
-  noStrucSteps = parseInt($("#nostrucsteps").val(), 10);
-  g_stepFrames = parseInt($("#numFrames").val(), 10);
-  g_noUpdates = $("#noupdates").prop("checked");
-  g_globalPlots = $("#plotCheckbox").prop("checked");
-  g_xsqrt = $("#xsqrt").prop("checked");
-  g_plotFrames = parseInt($("#numPlots").val(), 10);
-  g_endFraction = parseFloat($("#endfraction").val());
-  g_topLeak = $("#topleak").prop("checked");
-  g_sideLeak = $("#sideleak").prop("checked");
-  g_bottomLeak = $("#bottomleak").prop("checked");
-
+  updateFromPage();
   // loadExample("leaching");
   firstTime = true;
-//?  g_running = 1;
-
 };
 
-//const myCanvas = document.getElementById("myCanvas");
-//const recorder = new CanvasRecorder(myCanvas);
 function loop() {
   if (firstTime) {
     try {
@@ -216,7 +198,7 @@ function loop() {
       if (allStuff.length < coatingNo + 1) {
         return;
       }
-      console.log("About to simulate coating " + coatingNo);
+      console.log("About to simulate coating " + (coatingNo + 1));
       // record = allStuff.shift();
       record = allStuff[coatingNo];
       if (leachProgress.length > 1) {
@@ -231,15 +213,11 @@ function loop() {
       inhibitorTotal = record[2][6];
       inhibitorAccessible = record[2][7];
       firstTime = true;
-//?      g_running = 1;
+      //?      g_running = 1;
       frames = 0;
       leachProgress = [];
       leachProgress.push([0, 0]);
       world = simulation();
-      // console.log(
-      //   "In function loop - Inhibitor accessible " + inhibitorAccessible
-      // );
-
       frames = 0;
       series += 1;
       leachProgress = [];
@@ -262,40 +240,36 @@ function loop() {
       myCanvas = document.getElementById("myCanvas");
       myCanvas.width = world.cellSize * world.width;
       myCanvas.height = world.cellSize * world.height;
-//      capturer = new CCapture( { display: false, format: 'webm', framerate: 30, motionBlurFrames: 1, quality: 100, timeLimit:0, frameLimit: 0, verbose: false} );
-      capturer = new CCapture( {
-        verbose: false,
-        display: false,
-        framerate: parseInt(ccOptions.framerate),
-        motionBlurFrames: 0,
-        quality: 100,
-        format: ccOptions.format,
-        workersPath: 'dist/src/',
-        timeLimit: 0,
-        frameLimit: 0,
-        autoSaveTime: 0,
-      } );
-      capturer.start();
-      //      recorder = new CanvasRecorder(myCanvas);
-//      recorder.start();
-if (pixiVersion == "5.3.3") {
-//  app = new PIXI.Application({ width : myCanvas.width, height : myCanvas.height, 
-  renderer = new PIXI.Application({ width : myCanvas.width, height : myCanvas.height, 
-      view : myCanvas });
-//      stage = app.stage;
-      stage = renderer.stage;
-    } else {
-      renderer = renderer || new PIXI.autoDetectRenderer(myCanvas.width, myCanvas.height, myCanvas, {antialias: true, transparent: false});
-//      renderer = renderer || new PIXI.autoDetectRenderer(myCanvas.width, myCanvas.height, myCanvas, null, true); {antialias: true, transparent: false});
-      // create the root of the scene graph
-      stage = stage || new PIXI.Stage(0xFFFFFF);
-    }
-//    recorder = new CanvasRecorder(stage);
-//	            forceCanvas: true, view : document.getElementById("myCanvas") });
-//	  document.body.appendChild(app.view);
-//      renderer = PIXI.Renderer({ width : myCanvas.width, height : myCanvas.height, view: myCanvas });
+      gridCapturer = startRecording(fileNameStem + "C",coatingNo);
+//      plotCapturer = startRecording(fileNameStem + "P",coatingNo);
+      if (pixiVersion == "5.3.3") {
+        //  app = new PIXI.Application({ width : myCanvas.width, height : myCanvas.height,
+        renderer = new PIXI.Application({
+          width: myCanvas.width,
+          height: myCanvas.height,
+          view: myCanvas,
+        });
+        //      stage = app.stage;
+        stage = renderer.stage;
+      } else {
+        renderer =
+          renderer ||
+          new PIXI.autoDetectRenderer(
+            myCanvas.width,
+            myCanvas.height,
+            myCanvas,
+            { antialias: true, transparent: false }
+          );
+        //      renderer = renderer || new PIXI.autoDetectRenderer(myCanvas.width, myCanvas.height, myCanvas, null, true); {antialias: true, transparent: false});
+        // create the root of the scene graph
+        stage = stage || new PIXI.Stage(0xffffff);
+      }
+      //    recorder = new CanvasRecorder(stage);
+      //	            forceCanvas: true, view : document.getElementById("myCanvas") });
+      //	  document.body.appendChild(app.view);
+      //      renderer = PIXI.Renderer({ width : myCanvas.width, height : myCanvas.height, view: myCanvas });
       //renderer = PIXI.autoDetectRenderer(myCanvas.width, myCanvas.height, { view: myCanvas });
-/*      renderer =
+      /*      renderer =
         renderer ||
         new PIXI.autoDetectRenderer(
           myCanvas.width,
@@ -306,9 +280,9 @@ if (pixiVersion == "5.3.3") {
         );*/
 
       // create the root of the scene graph
-//      stage = app.stage;
-//      stage = new PIXI.Container();
-//      stage = stage || new PIXI.Stage(0xffffff);
+      //      stage = app.stage;
+      //      stage = new PIXI.Container();
+      //      stage = stage || new PIXI.Stage(0xffffff);
       textures = [];
       pixels = [];
       var textureCanvas = document.createElement("canvas");
@@ -324,11 +298,11 @@ if (pixiVersion == "5.3.3") {
           world.cellSize
         );
       }
-if (pixiVersion =="5.3.3") {
-  var baseTexture = new PIXI.BaseTexture.from(textureCanvas);
-} else {
-  var baseTexture = new PIXI.BaseTexture.fromCanvas(textureCanvas);
-}
+      if (pixiVersion == "5.3.3") {
+        var baseTexture = new PIXI.BaseTexture.from(textureCanvas);
+      } else {
+        var baseTexture = new PIXI.BaseTexture.fromCanvas(textureCanvas);
+      }
       for (var i = 0; i < world.palette.length; i++) {
         textures.push(
           new PIXI.Texture(
@@ -342,12 +316,8 @@ if (pixiVersion =="5.3.3") {
           )
         );
       }
-//canvasrecorder       recorder.start();
       drawGrid(pixels, world, stage, textures);
-//      app.render(stage);
       renderer.render(stage);
-//      renderer.render(stage);
-//      capturer.capture(renderer.view);
       $("#btnApplyChanges").removeClass("btn-danger");
       $("#btnApplyChanges").addClass("btn-success");
     } catch (ex) {
@@ -358,12 +328,8 @@ if (pixiVersion =="5.3.3") {
     firstTime = false;
   }
   if (g_running) {
-    //console.log("In loop function - not first time Inhibitor accessible " + inhibitorAccessible);
     world.step();
     leachProgress.push([frames, world.leached / world.coatingDry]);
-    //srg      g_noUpdates = $("#noupdates").prop("checked");
-    //srg      g_globalPlots = $("#plotCheckbox").prop("checked");
-    //srg      g_noUpdates = $("#noupdates").prop("checked");
     // limit speed of simulation
     if (frames % g_stepFrames === 0) {
       //        console.log("here we are running");
@@ -372,10 +338,10 @@ if (pixiVersion =="5.3.3") {
       $("#currentstep").text(frames);
       if (!g_noUpdates) {
         updateGrid(pixels, world, textures);
-//        app.render(stage);
+        //        app.render(stage);
         renderer.render(stage);
-//        capturer.capture(renderer.view);
-  //        renderer.render(stage);
+        //        capturer.capture(renderer.view);
+        //        renderer.render(stage);
       }
       if (frames % g_plotFrames === 0) {
         var xmax,
@@ -396,47 +362,49 @@ if (pixiVersion =="5.3.3") {
         }
         if (!g_noUpdates) {
           var options = {
+            canvas: true,
             grid: {
               hoverable: true,
               mouseActiveRadius: 4,
               backgroundColor: "#fdfdfd",
             },
-            xaxis: { min: 0, max: xmax, axisLabel: "Time Steps" 
-      , transform: function (v)
-      { if (g_xSqrt)
-          {
-           var x = Math.sqrt(v);
-          } else {
-           var x = v;
-          }
-          return x
-        },
-      inverseTransform: function (v)
-      {
-        if (g_xSqrt)
-        {
-         var x = v*v;
-        } else {
-         var x = v;
-        }
-        return x
-      }
-    },
+            xaxis: {
+              min: 0,
+              max: xmax,
+              axisLabel: "Time Steps",
+              transform: function (v) {
+                if (g_xSqrt) {
+                  var x = Math.sqrt(v);
+                } else {
+                  var x = v;
+                }
+                return x;
+              },
+              inverseTransform: function (v) {
+                if (g_xSqrt) {
+                  var x = v * v;
+                } else {
+                  var x = v;
+                }
+                return x;
+              },
+            },
             yaxis: {
               min: 0,
               max: ymax,
               axisLabel: "Cumulative Fraction of Coating Leached",
             },
-            legend: { container: $("#Legend") },
+            legend: { container: legendContainer, show: true },
+//            legend: { container: $("#Legend"), show: true },
           };
           if (multipleLeaches.length == 0) {
-            $.plot(
+            plotPlot = $.plot(
               $("#Graph"),
               [{ label: currentLabel, data: leachProgress }],
               options
             );
           } else {
-            $.plot(
+            plotPlot = $.plot(
               $("#Graph"),
               multipleLeaches.concat({
                 label: currentLabel,
@@ -445,39 +413,44 @@ if (pixiVersion =="5.3.3") {
               options
             );
           }
+//          plotPlot.render();
+//          myPlot = plotPlot.getCanvas();
+//          myPlot.render();
         }
       }
     }
     frames++;
-    g_endFraction = parseFloat($("#endfraction").val());
-    if (world.leached < g_endFraction * world.inhibitorAccessible) {
+    if (
+      world.leached < g_endFraction * world.inhibitorAccessible &&
+      !g_quickFinish
+    ) {
       requestAnimationFrame(loop);
       renderer.render(stage);
-      capturer.capture(renderer.view);
-//      console.log('request animation frame - 1');
+      gridCapturer.capture(renderer.view);
+//      plotCapturer.capture(myPlot);
     } else {
+      $("#quickfinish").prop("checked", false);
+      g_quickFinish = false;
       firstTime = true;
       requestAnimationFrame(loop);
       renderer.render(stage);
-      capturer.capture(renderer.view);
-//      console.log('request animation frame - 2');
-      capturer.stop();
-      // default save, will download automatically a file called {name}.extension (webm/gif/tar)
-      capturer.save();
-//canvasrecorder       recorder.stop();
-//canvasrecorder       recorder.save('fred.webm');
-    }
-  }
-//  requestAnimationFrame(loop);
-//  console.log('request animation frame - 3');
-  //  capturer.capture(renderer.view);  
-//  recorder.stop();
-//  recorder.save('fred.webm');
-}
+      gridCapturer.capture(renderer.view);
+      stopRecording(gridCapturer);
+//      plotCapturer.capture(myPlot);
+//      stopRecording(plotCapturer);
+      if (noSamples == (coatingNo + 1)) {
+        graphPicture('#Graph',(fileNameStem+'XYG'),coatingNo);
+        graphPicture('#Legend',(fileNameStem+'XYL'),coatingNo);
+        saveCurrentData();
+      }
+    };
+  };
+};
 
 function coatingBit(stuff) {
+  fileNameStem = generateFileNameStem();
   for (let i = 0; i < noSamples; i++) {
-    console.log("About to make coating " + i);
+    console.log("About to make coating " + (i + 1));
     makeCoating();
     countAccessible();
     var record = [];
@@ -488,7 +461,7 @@ function coatingBit(stuff) {
       coatingDry *= world.width;
     } else {
       coatingDry *= world.width - sizeOfScribe;
-    }
+    };
     record.push([
       minimumPVC,
       maximumPVC,
@@ -500,11 +473,15 @@ function coatingBit(stuff) {
       inhibitorAccessible,
     ]);
     allStuff.push(record);
-    console.log('Inhibitor PVC: ' + (inhibitorTotal/(inhibitorTotal+binderTotal)).toPrecision(2)
-    + ' Accessible: ' + (inhibitorAccessible/inhibitorTotal).toPrecision(2));
-  }
-}
-
+    console.log(
+      "Inhibitor PVC: " +
+        (inhibitorTotal / (inhibitorTotal + binderTotal)).toPrecision(2) +
+        " Accessible: " +
+        (inhibitorAccessible / inhibitorTotal).toPrecision(2)
+    );
+  };
+  saveGrids();
+};
 
 function wrappedLoop() {
   return new Promise((resolve) => {
@@ -514,30 +491,9 @@ function wrappedLoop() {
 }
 
 function saveGrids() {
-  let d = new Date();
-  let name =
-    zeroNumber(d.getFullYear() % 100) +
-    zeroNumber(d.getMonth() + 1) +
-    zeroNumber(d.getDate()) +
-    zeroNumber(d.getHours(d)) +
-    zeroNumber(d.getMinutes());
-  if (g_gridFromCA) {
-    name += "CA";
-  } else {
-    name += "PP";
-  }
-  if (g_manualInter) {
-    name += "M";
-  }
-  name +=
-    "grid" +
-    "PS" +
-    Math.round(100 * minimumPVC) +
-    "PL" +
-    Math.round(100 * maximumPVC);
   ret = JSON.stringify(allStuff);
   var BB = new Blob([ret], { type: "text/plain;charset=UTF-8" });
-  saveAs(BB, name + ".txt");
+  saveAs(BB, fileNameStem + ".txt");
 }
 
 function changeStepFrames() {
@@ -567,51 +523,48 @@ function saveCurrentData() {
     );
   }
   var BB = new Blob([ret], { type: "text/plain;charset=UTF-8" });
-  saveAs(BB, "ActCoatSim" + ".txt");
+  saveAs(BB, fileNameStem + "GD" + ".txt");
   //	multipleLeaches = JSON.parse(ret);
   //	multipleLeaches = JSON.parse(BB.slice(contentType="text/plain;charset=UTF8"));
+}
+
+function graphPicture(element,fileNameBit,coatNo) {
+  var ccanvas;
+  html2canvas(document.querySelector(element)).then(function(ccanvas) {
+    console.log(ccanvas);
+    fileNameBit = fileNameBit + (coatNo + 1) + '.png';
+    saveAs(ccanvas.toDataURL(), fileNameBit);
+  });
 }
 
 function loadExample(example) {
   allStuff = [];
   coatingBit();
-  saveGrids();
-  //  loadGrids();
+//  graphPicture('#Graph',(fileNameStem+'XYG'),coatingNo);
+//  graphPicture('#Legend',(fileNameStem+'XYL'),coatingNo);
+//  saveGrids();
+//  saveCurrentData();
   firstTime = true;
   leachProgress = [];
   coatingNo = -1;
   loop();
-  /*  g_currentExample = example;
-  g_nextExample = "example_" + example;
-  $("#exampleName").text(example);
-  firstTime = true;
-  g_running = 0;
-  frames = 0;
-  leachProgress = [];
-  leachProgress.push([0, 0]);
-  g_topLeak = $("#topleak").prop("checked");
-  g_sideLeak = $("#sideleak").prop("checked");
-  g_bottomLeak = $("#bottomleak").prop("checked");
-  g_globalPlots = $("#plotCheckbox").prop("checked");
-  //   console.log(g_globalPlots);*/
 }
 
 function reloadExample(example) {
   multipleLeaches.push({ label: currentLabel, data: leachProgress });
   loadExample(example);
-//  g_running = 1;
 }
 
 function updateGrid(pixels, world, textures) {
-//  console.log('updategrid');
   for (var y = 0; y < world.height; y++) {
     for (var x = 0; x < world.width; x++) {
       var newColor = world.grid[y][x].getColor();
       if (newColor !== world.grid[y][x].oldColor) {
         if (pixiVersion == "5.3.3") {
-        pixels[x + y * world.width].texture = textures[newColor];
+          pixels[x + y * world.width].texture = textures[newColor];
         } else {
-        pixels[x + y * world.width].setTexture(textures[newColor]);
+//          console.log('updategraphics',x,y,world.width);
+          pixels[x + y * world.width].setTexture(textures[newColor]);
         }
         world.grid[y][x].oldColor = newColor;
       }
@@ -627,12 +580,11 @@ function drawGrid(pixels, world, stage, textures) {
   }
   for (var y = 0; y < world.height; y++) {
     for (var x = 0; x < world.width; x++) {
-        var sprite = new PIXI.Sprite(textures[0]);
+      var sprite = new PIXI.Sprite(textures[0]);
       pixels[x + y * world.width] = sprite;
       sprite.x = x * world.cellSize;
       sprite.y = y * world.cellSize;
       stage.addChild(sprite);
     }
   }
-  //This is where to savet he thumbnail initial structure   renderer.
 }

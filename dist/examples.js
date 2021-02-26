@@ -142,8 +142,8 @@ function makeCoating() {
         noOfParticles = parseInt($("#noofparticles").val(), 10);
         noOfCuts = parseInt($("#noofcuts").val(), 10);
         //			Create particles
-        //console.log('fred');
-        //console.log(discInhibitor);
+//        console.log('create particles');
+//        console.log(discInhibitor);
         for (var l = 0; l < noOfParticles; l++) {
           var particle = deepCopy(disc);
           touching = 1;
@@ -159,7 +159,7 @@ function makeCoating() {
                 for (var k = 0; k <= noOfCuts; k++) {
                   constant = 2.0 * radius * Math.random() - radius;
                   slope = 4.0 * Math.random() - 2;
-                  //						console.log(constant,slope);
+//                  						console.log(constant,slope);
                   for (var y = -radius; y <= radius; y++) {
                     for (var x = -radius; x <= radius; x++) {
                       if (!particle[y][x]) {
@@ -182,10 +182,11 @@ function makeCoating() {
               } while (particleInhibitor < 5);
             }
 
-            //					console.log(particleInhibitor);
-
+//            					console.log(particleInhibitor);
+            var placingTry = 0;
             do {
               //						Test for overlap of the particle inside the grid
+              placingTry = placingTry + 1;
               touching = 0;
               placedParticle = false;
               ycentre = Math.floor(world.height * Math.random());
@@ -200,7 +201,7 @@ function makeCoating() {
                     yyc < world.height &&
                     xxc < world.width
                   ) {
-                    //								console.log(y,x,yyc,xxc);
+//                    								console.log(y,x,yyc,xxc);
                     if (!particle[y][x] && !grid[yyc][xxc]) {
                       touching += 1;
                     }
@@ -228,9 +229,13 @@ function makeCoating() {
                   }
                 }
               }
-            } while (!placedParticle);
-
-            //					console.log('fred');
+              console.log('may place');
+            } while (!placedParticle && placingTry < 300);
+            if (placedParticle) {
+            	console.log('particle placed')
+            } else {
+              console.log('particle NOT placed')
+            }
           }
         }
       }
@@ -495,24 +500,17 @@ function manualStructure() {
 //});
   }
 
-  function zeroNumber(item) {
-	let sitem = item.toString();
-	if (item<10) {
-		sitem += '0';
-	}
-	return sitem;
-}
-
 function saveGrid(grid) {
-	let d = new Date();
+/*	let d = new Date();
 	let name = zeroNumber(d.getFullYear()%100) + zeroNumber(d.getMonth()+1) + zeroNumber(d.getDate()) +
-				 zeroNumber(d.getHours(d)) + zeroNumber(d.getMinutes());
+				 zeroNumber(d.getHours()) + zeroNumber(d.getMinutes());
 	coatingDry = (world.height-depthOfWater)*world.width;
 	name += 'grid' + 'P' + Math.round(100*inhibitorTotal/coatingDry) +
-				'A' + Math.round(100*inhibitorAccessible/inhibitorTotal);
+				'A' + Math.round(100*inhibitorAccessible/inhibitorTotal); */
 	ret = JSON.stringify(grid);
 	var BB = new Blob([ret], {type: "text/plain;charset=UTF-8"});
-	saveAs(BB, name + ".txt");
+//  saveAs(BB, name + ".txt");
+  saveAs(BB, fileNameStem + ".txt");
 }
 
 function simulation() {
