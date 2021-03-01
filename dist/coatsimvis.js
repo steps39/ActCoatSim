@@ -11,7 +11,7 @@ var firstTime, g_endFraction;
 var g_running = true;
 var g_globalPlots = false;
 var maxFrames, maxLeached;
-var g_topwater, g_topcoat, g_scribed, g_topLeak, g_sideLeak, g_bottomLeak, g_manualInter, g_gridFromCA, g_xSqrt, g_quickFinish;
+var g_topwater, g_topcoat, g_scribed, g_topLeak, g_leftLeak, g_rightLeak, g_bottomLeak, g_manualInter, g_gridFromCA, g_xSqrt, g_quickFinish, g_allFinish, g_captureAnimation, g_capturePlot;
 var inhibitorSolubility, inhibitorDensity, maximumParticle, minimumParticle, maximumPVC, minimumPVC, coatingNo, inhibitorAccessible, inhibitorTotal;
 var loopFinished = false;
 var allStuff = [];
@@ -47,7 +47,7 @@ function startRecording(fileNameStem,coatingNo) {
     workersPath: "dist/src/",
     timeLimit: 0,
     frameLimit: 0,
-    autoSaveTime: 0,
+    autoSaveTime:600,
   });
   lcapturer.start();
   return lcapturer;
@@ -104,6 +104,7 @@ function changeCheck(htmlObject) {
 }
 
 function updateFromPage() {
+  noSamples = changeInt("#nocoatings");
   g_stepFrames = changeInt("#numFrames");
   g_plotFrames = changeInt("#numPlots");
   depthOfWater = changeInt("#depthofwater");
@@ -129,9 +130,11 @@ function updateFromPage() {
   g_globalPlots = changeCheck("#plotCheckbox");
   g_xSqrt = changeCheck("#xsqrt");
   g_topLeak = changeCheck("#topleak");
-  g_sideLeak = changeCheck("#sideleak");
+  g_leftLeak = changeCheck("#leftleak");
+  g_rightLeak = changeCheck("#rightleak");
   g_bottomLeak = changeCheck("#bottomleak");
-  noSamples = changeInt("#nocoatings");
+  g_captureAnimation = changeCheck("#captureanimation");
+  g_capturePlot = changeCheck("#captureplot");
 }
 
 window.onload = function () {
@@ -186,12 +189,18 @@ window.onload = function () {
   $("#quickfinish").on("change", function (evt) {
     g_quickFinish = changeCheck("#quickfinish");
   });
+/*  $("#allfinish").on("change", function (evt) {
+    g_allFinish = changeCheck("#allfinish");
+  });*/
   updateFromPage();
   // loadExample("leaching");
   firstTime = true;
 };
 
 function loop() {
+  if (g_allFinish) {
+    return;
+  }
   if (firstTime) {
     try {
       coatingNo += 1;
@@ -218,6 +227,7 @@ function loop() {
       leachProgress = [];
       leachProgress.push([0, 0]);
       world = simulation();
+//      world = makeTest();
       frames = 0;
       series += 1;
       leachProgress = [];
@@ -240,7 +250,10 @@ function loop() {
       myCanvas = document.getElementById("myCanvas");
       myCanvas.width = world.cellSize * world.width;
       myCanvas.height = world.cellSize * world.height;
-      gridCapturer = startRecording(fileNameStem + "C",coatingNo);
+      if (g_captureAnimation) {
+        gridCapturer = startRecording(fileNameStem + "PVC" + Math.round(100*world.inhibitorTotal / world.coatingDry) +
+                        "IA" + Math.round(100*world.inhibitorAccessible / world.inhibitorTotal) + "C",coatingNo);
+      }
 //      plotCapturer = startRecording(fileNameStem + "P",coatingNo);
       if (pixiVersion == "5.3.3") {
         //  app = new PIXI.Application({ width : myCanvas.width, height : myCanvas.height,
@@ -420,27 +433,34 @@ function loop() {
       }
     }
     frames++;
+    g_allFinish = changeCheck("#allfinish");
     if (
-      world.leached < g_endFraction * world.inhibitorAccessible &&
-      !g_quickFinish
+      (world.leached < g_endFraction * world.inhibitorAccessible) &&
+      !g_quickFinish && !g_allFinish
     ) {
       requestAnimationFrame(loop);
-      renderer.render(stage);
-      gridCapturer.capture(renderer.view);
+      if (g_captureAnimation) {
+        renderer.render(stage);
+        gridCapturer.capture(renderer.view);
+      }
 //      plotCapturer.capture(myPlot);
     } else {
       $("#quickfinish").prop("checked", false);
       g_quickFinish = false;
       firstTime = true;
       requestAnimationFrame(loop);
-      renderer.render(stage);
-      gridCapturer.capture(renderer.view);
-      stopRecording(gridCapturer);
+      if (g_captureAnimation) {
+        renderer.render(stage);
+        gridCapturer.capture(renderer.view);
+        stopRecording(gridCapturer);
+      }
 //      plotCapturer.capture(myPlot);
 //      stopRecording(plotCapturer);
-      if (noSamples == (coatingNo + 1)) {
-        graphPicture('#Graph',(fileNameStem+'XYG'),coatingNo);
-        graphPicture('#Legend',(fileNameStem+'XYL'),coatingNo);
+      if ((noSamples == (coatingNo + 1)) || g_allFinish) {
+        if (g_capturePlot) {
+          graphPicture('#Graph',(fileNameStem+'XYG'),coatingNo);
+          graphPicture('#Legend',(fileNameStem+'XYL'),coatingNo);
+        }
         saveCurrentData();
       }
     };
@@ -538,6 +558,7 @@ function graphPicture(element,fileNameBit,coatNo) {
 }
 
 function loadExample(example) {
+  updateFromPage();
   allStuff = [];
   coatingBit();
 //  graphPicture('#Graph',(fileNameStem+'XYG'),coatingNo);
@@ -547,6 +568,8 @@ function loadExample(example) {
   firstTime = true;
   leachProgress = [];
   coatingNo = -1;
+  $("#allfinish").prop("checked", false);
+  g_allFinish = false;
   loop();
 }
 

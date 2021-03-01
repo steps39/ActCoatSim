@@ -68,7 +68,44 @@ function CAWorld(options) {
 			}
 		}
 
-		// bottom up, left to right processing
+		function randomArray(length) {
+			array = [];
+			for (let i = 0;i < length; i++){
+				array[i] = i;
+			}
+			for (let i = array.length - 1; i > 0; i--) {
+			  const j = Math.floor(Math.random() * (i + 1));
+			  // doesn't work with IE        [array[i], array[j]] = [array[j], array[i]];
+			  temp = array[i];
+			  array[i] = array[j];
+			  array[j] = temp;
+			}
+			return array;
+		}
+		// random processing
+		yr = randomArray(this.height);
+		for (y=this.height-1; y>=0; y--) {
+			xr = randomArray(this.width);
+			for (x=this.width-1; x>=0; x--) {
+				this.fillNeighbors(neighborhood, xr[x], yr[y]);
+				var cell = this.grid[yr[y]][xr[x]];
+				cell.process(neighborhood);
+
+				// perform any delays
+				for (var i=0; i<cell.delays.length; i++) {
+					cell.delays[i].steps--;
+					if (cell.delays[i].steps <= 0) {
+						// perform action and remove delay
+						cell.delays[i].action(cell);
+						cell.delays.splice(i, 1);
+						i--;
+					}
+				}
+			}
+		}
+
+
+/*		// bottom up, left to right processing
 		for (y=this.height-1; y>=0; y--) {
 			for (x=this.width-1; x>=0; x--) {
 				this.fillNeighbors(neighborhood, x, y);
@@ -86,7 +123,7 @@ function CAWorld(options) {
 					}
 				}
 			}
-		}
+		}*/
 	};
 
 	//var NEIGHBORLOCS = [{x:-1, y:-1}, {x:0, y:-1}, {x:1, y:-1}, {x:-1, y:0}, {x:1, y:0},{x:-1, y:1}, {x:0, y:1}, {x:1, y:1}];
