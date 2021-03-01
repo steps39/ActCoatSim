@@ -11,8 +11,9 @@ var firstTime, g_endFraction;
 var g_running = true;
 var g_globalPlots = false;
 var maxFrames, maxLeached;
-var g_topwater, g_topcoat, g_scribed, g_topLeak, g_leftLeak, g_rightLeak, g_bottomLeak, g_manualInter, g_gridFromCA, g_xSqrt, g_quickFinish, g_allFinish, g_captureAnimation, g_capturePlot;
-var inhibitorSolubility, inhibitorDensity, maximumParticle, minimumParticle, maximumPVC, minimumPVC, coatingNo, inhibitorAccessible, inhibitorTotal;
+var g_topwater, g_topcoat, g_scribed, g_topLeak, g_leftLeak, g_rightLeak, g_bottomLeak, g_manualInter, g_diffusionTest, g_gridFromCA, g_xSqrt, g_quickFinish, g_allFinish, g_captureAnimation, g_capturePlot;
+var inhibitorSolubility, inhibitorDensity, maximumParticle, minimumParticle, radius, maximumPVC, minimumPVC, coatingNo, inhibitorAccessible, inhibitorTotal;
+var g_grid;
 var loopFinished = false;
 var allStuff = [];
 var firstTime = true;
@@ -116,6 +117,7 @@ function updateFromPage() {
   probSolubility = changeFloat("#probsol");
   g_topwater = changeCheck("#waterontop");
   g_topcoat = changeCheck("#topcoated");
+  g_diffusionTest = changeCheck("#diffusiontest");
   g_gridFromCA = changeCheck("#gridfromca");
   g_manualInter = changeCheck("#manualinter");
   g_scribed = changeCheck("#scribed");
@@ -123,6 +125,7 @@ function updateFromPage() {
   g_endFraction = changeFloat("#endfraction");
   minimumPVC = changeFloat("#minimumpvc");
   maximumPVC = changeFloat("#maximumpvc");
+  radius = changeInt("#radius");
   minimumParticle = changeInt("#minparticle");
   maximumParticle = changeInt("#maxparticle");
   g_stepFrames = parseInt($("#numFrames").val(), 10);
@@ -207,7 +210,7 @@ function loop() {
       if (allStuff.length < coatingNo + 1) {
         return;
       }
-      console.log("About to simulate coating " + (coatingNo + 1));
+      console.log("About to simulate system " + (coatingNo + 1));
       // record = allStuff.shift();
       record = allStuff[coatingNo];
       if (leachProgress.length > 1) {
@@ -221,6 +224,7 @@ function loop() {
       binderTotal = record[2][5];
       inhibitorTotal = record[2][6];
       inhibitorAccessible = record[2][7];
+      console.log("Inhibitor total accessible ", inhibitorTotal,inhibitorAccessible);
       firstTime = true;
       //?      g_running = 1;
       frames = 0;
@@ -468,7 +472,6 @@ function loop() {
 };
 
 function coatingBit(stuff) {
-  fileNameStem = generateFileNameStem();
   for (let i = 0; i < noSamples; i++) {
     console.log("About to make coating " + (i + 1));
     makeCoating();
@@ -560,7 +563,12 @@ function graphPicture(element,fileNameBit,coatNo) {
 function loadExample(example) {
   updateFromPage();
   allStuff = [];
-  coatingBit();
+  fileNameStem = generateFileNameStem();
+  if (!g_diffusionTest) {
+    coatingBit();
+  } else {
+    gridTest(64,96,radius);
+  }
 //  graphPicture('#Graph',(fileNameStem+'XYG'),coatingNo);
 //  graphPicture('#Legend',(fileNameStem+'XYL'),coatingNo);
 //  saveGrids();

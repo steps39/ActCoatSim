@@ -676,7 +676,8 @@ function simulation() {
         //init
         this.inhibitor = inhibitorDensity;
         //			console.log(this.x,this.y);
-        if (!g_gridFromCA) {
+        if (!g_gridFromCA && !g_diffusionTest) {
+          console.log("partilce");
           this.particleID = particleID[this.y][this.x];
         } else {
           this.particleID = 10;
@@ -698,35 +699,39 @@ function simulation() {
           neighbors[world.BOTTOM.index].isSolid;
       },*/
     });
-
-    // pass in our generated coating data
-    world.initializeFromGrid(
-      [
-        { name: "polymer", gridValue: 1 },
-        { name: "inhibitor", gridValue: 2 },
-        { name: "water", gridValue: 0 },
-      ],
-      grid
-    );
-
-/*    grid = gridTest(world.height,world.width,10);
-    // pass in our generated coating data
-    world.initializeFromGrid(
-      [
-        { name: "inhibitor", gridValue: 1 },
-        { name: "water", gridValue: 0 },
-      ],
-      grid
-	);*/
+    if (!g_diffusionTest) {
+      // pass in our generated coating data
+      world.initializeFromGrid(
+        [
+          { name: "polymer", gridValue: 1 },
+          { name: "inhibitor", gridValue: 2 },
+          { name: "water", gridValue: 0 },
+        ],
+        grid
+      );
+    } else {
+      // pass in the diffusion test system
+      world.initializeFromGrid(
+        [
+          { name: "inhibitor", gridValue: 1 },
+          { name: "water", gridValue: 0 },
+        ],
+        grid
+      );
+    }
 	return world;
 }
 
 function gridTest(height, width,radius) {
-  var lgrid = [];
+  var grid = [];
+  var particleID = [];
+  var record = [];
   for (var y = 0; y < height; y++) {
-    lgrid[y] = [];
+    grid[y] = [];
+//    particleID[y] = []
     for (var x = 0; x < width; x++) {
-      lgrid[y][x] = 0;
+      grid[y][x] = 0;
+//      particleID[y][x] = 1;
     }
   }
   //			Make a disc in the middle
@@ -741,16 +746,39 @@ function gridTest(height, width,radius) {
   for (var y = -radius; y <= radius; y++) {
     for (var x = -radius; x <= radius; x++) {
       if (i2[Math.abs(y)] + i2[Math.abs(x)] <= r2) {
-        lgrid[y + ym][x + xm] = 1;
+        grid[y + ym][x + xm] = 1;
+//        particleID[y + ym][x + xm] = 1;
         discInhibitor += 1;
       } else {
-        lgrid[y + ym][x + xm] = 0;
+        grid[y + ym][x + xm] = 0;
       }
     }
   }
+  particleID = null;
+  coatingDry = height;
+  binderTotal = height * width;
+  minimumPVC = discInhibitor / binderTotal;
+  maximumPVC = minimumPVC;
+  minimumParticle = radius;
+  maximumParticle = radius;
   inhibitorTotal = discInhibitor;
   inhibitorAccessible = discInhibitor;
-  return lgrid;
+  record.push(grid);
+  record.push(particleID);
+  record.push([
+    minimumPVC,
+    maximumPVC,
+    minimumParticle,
+    maximumParticle,
+    coatingDry,
+    binderTotal,
+    inhibitorTotal,
+    inhibitorAccessible,
+  ]);
+  for (i=1;i<=noSamples;i++) {
+    allStuff.push(record);
+  }
+//  g_grid = grid;
 }
 
 function makeTest() {
@@ -785,6 +813,7 @@ function makeTest() {
     for (var x = -radius; x <= radius; x++) {
       if (i2[Math.abs(y)] + i2[Math.abs(x)] <= r2) {
         grid[y + ym][x + xm] = 1;
+        particleID[y + ym][x + xm] = 1;
         discInhibitor += 1;
       } else {
         grid[y + ym][x + xm] = 0;
@@ -795,7 +824,8 @@ function makeTest() {
   // Inhibitor density colour
   world.palette.push("89, 125, 206, 1");
   for (var i = 1; i <= inhibitorDensity; i++) {
-    world.palette.push("189, 125, 206, " + (i + 5) / (inhibitorDensity + 5));
+//    world.palette.push("189, 125, 206, " + ((i + 5) / (inhibitorDensity + 5))**2);
+    world.palette.push("189, 125, 206, " + (i / inhibitorDensity)**2);
   }
   // Polymer surface and bulk
   world.palette.push("109, 170, 44, 1");
