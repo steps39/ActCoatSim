@@ -76,6 +76,12 @@
                 </div>
                 <div class="row">
                     <div class="col-sm-5">
+                        <label for="diffusiontest" class="col-sm-5 control-label">Check Diffusion</label>
+                        <input name="diffusiontest" id="diffusiontest" class="form-check-input" type="checkbox">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-5">
                         <label for="gridfromca" class="col-sm-5 control-label">CA Microstructure</label>
                         <input name="gridfromca" id="gridfromca" class="form-check-input" type="checkbox">
                     </div>
@@ -199,14 +205,18 @@
                     <input name="topleak" id="topleak" class="form-check-input" type="checkbox" checked>
                 </div>
                 <div class="col-sm-5">
-                    <label for="sideleak" class="col-sm-5 control-label">Loose from Side</label>
-                    <input name="sideleak" id="sideleak" class="form-check-input" type="checkbox">
+                    <label for="bottomleak" class="col-sm-5 control-label">Loose from Bottom</label>
+                    <input name="bottomleak" id="bottomleak" class="form-check-input" type="checkbox">
                 </div>
             </div>
             <div class="row">
                 <div class="col-sm-5">
-                    <label for="bottomleak" class="col-sm-5 control-label">Loose from Bottom</label>
-                    <input name="bottomleak" id="bottomleak" class="form-check-input" type="checkbox">
+                    <label for="leftleak" class="col-sm-5 control-label">Loose from Left</label>
+                    <input name="leftleak" id="leftleak" class="form-check-input" type="checkbox">
+                </div>
+                <div class="col-sm-5">
+                    <label for="rightleak" class="col-sm-5 control-label">Loose from Right</label>
+                    <input name="rightleak" id="rightleak" class="form-check-input" type="checkbox">
                 </div>
             </div>
         </div>
@@ -238,17 +248,33 @@
             <div class="row">
                 <div class="col-sm-5">
                     <label for="plotCheckbox" class="col-sm-5 control-label">Global Plot</label>
-                    <input name="plotCheckbox" id="plotCheckbox" class="form-check-input" type="checkbox">
+                    <input name="plotCheckbox" id="plotCheckbox" class="form-check-input" type="checkbox" checked>
                 </div>
                 <div class="col-sm-5">
                     <label for="xsqrt" class="col-sm-5 control-label">X Square Root</label>
-                    <input name="xsqrt" id="xsqrt" class="form-check-input" type="checkbox">
+                    <input name="xsqrt" id="xsqrt" class="form-check-input" type="checkbox" checked>
+                </div>
+            </div>
+            <div class="row">
+                <div class="row">
+                    <div class="col-sm-5">
+                        <label for="captureanimation" class="col-sm-5 control-label">Capture animation to webm</label>
+                        <input name="captureanimation" id="captureanimation" class="form-check-input" type="checkbox" checked>
+                    </div>
+                    <div class="col-sm-5">
+                        <label for="captureplot" class="col-sm-5 control-label">Capture plot to png</label>
+                        <input name="captureplot" id="captureplot" class="form-check-input" type="checkbox" checked>
+                    </div>
                 </div>
             </div>
             <div class="row">
                 <div class="col-sm-5">
-                    <label for="quickfinish" class="col-sm-5 control-label">End this Simulation</label>
+                    <label for="quickfinish" class="col-sm-5 control-label">End current Simulation</label>
                     <input name="quickfinish" id="quickfinish" class="form-check-input" type="checkbox">
+                </div>
+                <div class="col-sm-5">
+                    <label for="allfinish" class="col-sm-5 control-label">End all Simulations</label>
+                    <input name="allfinish" id="allfinish" class="form-check-input" type="checkbox">
                 </div>
             </div>
         </div>
@@ -332,6 +358,7 @@
         <script src="./dist/CCapture.min.js"></script>
         <script src="./dist/html2canvas.min.js"></script>
         <script src="./dist/webm-writer-0.3.0.js"></script>
+        <script src="./dist/rainbowvis.js"></script>
         <script src="./dist/coatsimvis.js"></script>
         <script src="./dist/examples.js"></script>
         <script src="./dist/bootstrap.min.js"></script>

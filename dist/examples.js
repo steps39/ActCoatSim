@@ -524,9 +524,31 @@ function simulation() {
     world.palette = [];
     // Inhibitor density colour
     world.palette.push("89, 125, 206, 1");
-    for (var i = 1; i <= inhibitorDensity; i++) {
-      world.palette.push("189, 125, 206, " + (i + 5) / (inhibitorDensity + 5));
+      function myTrim(x) {
+        return x.replace(/^\s+|\s+$/gm,'');
+      }
+      function convertToRGB (hex) {
+      var color = [];
+      color[0] = parseInt ((myTrim(hex)).substring (0, 2), 16);
+      color[1] = parseInt ((myTrim(hex)).substring (2, 4), 16);
+      color[2] = parseInt ((myTrim(hex)).substring (4, 6), 16);
+      return (color[0] + "," + color[1] + "," + color[2]);
     }
+    var rainbow = new Rainbow();
+    if (inhibitorDensity>1) {
+      rainbow.setNumberRange(1, inhibitorDensity);
+    } else {
+      rainbow.setNumberRange(1, inhibitorDensity+1);
+    }
+    rainbow.setSpectrum('pink', 'purple');
+    for (var i = 1; i <= inhibitorDensity; i++) {
+      world.palette.push(convertToRGB(rainbow.colourAt(i)) + ((i + 5) / (inhibitorDensity + 5)));
+//      world.palette.push(convertToRGB(rainbow.colourAt(i))+",0.5");
+    }
+//  Original colour range
+/*    for (var i = 1; i <= inhibitorDensity; i++) {
+      world.palette.push("189, 125, 206, " + (i + 5) / (inhibitorDensity + 5));
+    }*/
     // Polymer surface and bulk
     world.palette.push("109, 170, 44, 1");
     world.palette.push("192, 192, 192, 1");
@@ -651,10 +673,10 @@ function simulation() {
                 neighbors[d[i]].inhibitor < inhibitorSolubility
               ) {
                 if (Math.random() <= probSolubility) {
-/*                  var amt = Math.min(
-                    this.inhibitor,
-                    9 - neighbors[d[i]].inhibitor
-                  );*/
+//                  var amt = Math.min(
+//                    this.inhibitor,
+//                    9 - neighbors[d[i]].inhibitor
+//                  );
                   var amt = 1;
                   this.inhibitor -= amt;
                   neighbors[d[i]].inhibitor += amt;
@@ -669,6 +691,13 @@ function simulation() {
                 }
               }
             }
+/*          if (this.inhibitor === 0) {
+            world.grid[this.y][this.x] = new world.cellTypes.water(
+              this.x,
+              this.y
+            );
+            this.inhibitor = 0;
+            return;*/
           }
         },
       },

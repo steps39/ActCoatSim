@@ -70,25 +70,32 @@ function zeroNumber(item) {
 function generateFileNameStem() {
   let d = new Date();
   let name =
-    zeroNumber(d.getFullYear() % 100) +
-    zeroNumber(d.getMonth() + 1) +
-    zeroNumber(d.getDate()) +
-    zeroNumber(d.getHours()) +
-    zeroNumber(d.getMinutes());
-  if (g_gridFromCA) {
-    name += "CA";
+  zeroNumber(d.getFullYear() % 100) +
+  zeroNumber(d.getMonth() + 1) +
+  zeroNumber(d.getDate()) +
+  zeroNumber(d.getHours()) +
+  zeroNumber(d.getMinutes()) +
+  "ID" + Math.round(inhibitorDensity) +
+  "IS" + Math.round(inhibitorSolubility) +
+  "R" + Math.round(radius);
+  if (g_diffusionTest) {
+    name += "DT";
   } else {
-    name += "PP";
+    if (g_gridFromCA) {
+      name += "CA";
+    } else {
+      name += "PP";
+    }
+    if (g_manualInter) {
+      name += "M";
+      name +=
+        "grid" +
+        "PS" +
+        Math.round(100 * minimumPVC) +
+        "PL" +
+        Math.round(100 * maximumPVC);
+    }
   }
-  if (g_manualInter) {
-    name += "M";
-  }
-  name +=
-    "grid" +
-    "PS" +
-    Math.round(100 * minimumPVC) +
-    "PL" +
-    Math.round(100 * maximumPVC);
   return name;
 }
 
@@ -255,8 +262,13 @@ function loop() {
       myCanvas.width = world.cellSize * world.width;
       myCanvas.height = world.cellSize * world.height;
       if (g_captureAnimation) {
-        gridCapturer = startRecording(fileNameStem + "PVC" + Math.round(100*world.inhibitorTotal / world.coatingDry) +
+        if (g_diffusionTest) {
+          gridCapturer = startRecording(fileNameStem + "PVC" + Math.round(100*world.inhibitorTotal / world.coatingDry) +
+                         "IA" + Math.round(100*world.inhibitorAccessible / world.inhibitorTotal) + "T",coatingNo);
+        } else {
+          gridCapturer = startRecording(fileNameStem + "PVC" + Math.round(100*world.inhibitorTotal / world.coatingDry) +
                         "IA" + Math.round(100*world.inhibitorAccessible / world.inhibitorTotal) + "C",coatingNo);
+        }
       }
 //      plotCapturer = startRecording(fileNameStem + "P",coatingNo);
       if (pixiVersion == "5.3.3") {
@@ -345,9 +357,18 @@ function loop() {
     firstTime = false;
   }
   if (g_running) {
+    // Draw before anything happens
+    if (frames == 0) {
+      if (g_captureAnimation) {
+        console.log("filling the holes");
+        updateGrid(pixels, world, textures);
+        renderer.render(stage);
+        gridCapturer.capture(renderer.view);
+      }
+    }
     world.step();
     leachProgress.push([frames, world.leached / world.coatingDry]);
-    // limit speed of simulation
+     // limit speed of simulation
     if (frames % g_stepFrames === 0) {
       //        console.log("here we are running");
       /*            world.step();
@@ -462,8 +483,16 @@ function loop() {
 //      stopRecording(plotCapturer);
       if ((noSamples == (coatingNo + 1)) || g_allFinish) {
         if (g_capturePlot) {
-          graphPicture('#Graph',(fileNameStem+'XYG'),coatingNo);
-          graphPicture('#Legend',(fileNameStem+'XYL'),coatingNo);
+          if (g_diffusionTest) {
+            graphPicture('#Graph',(fileNameStem + "PVC" + Math.round(100*world.inhibitorTotal / world.coatingDry) +
+                          "IA" + Math.round(100*world.inhibitorAccessible / world.inhibitorTotal) + "XYG"),coatingNo);
+            graphPicture('#Legend',(fileNameStem + "PVC" + Math.round(100*world.inhibitorTotal / world.coatingDry) +
+                          "IA" + Math.round(100*world.inhibitorAccessible / world.inhibitorTotal) + "XYL"),coatingNo);
+
+          } else {
+            graphPicture('#Graph',(fileNameStem+'XYG'),coatingNo);
+            graphPicture('#Legend',(fileNameStem+'XYL'),coatingNo);
+          }
         }
         saveCurrentData();
       }
