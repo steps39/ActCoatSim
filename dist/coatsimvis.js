@@ -207,6 +207,81 @@ window.onload = function () {
   firstTime = true;
 };
 
+function setupAnimation(){
+  myCanvas = document.getElementById("myCanvas");
+  myCanvas.width = world.cellSize * world.width;
+  myCanvas.height = world.cellSize * world.height;
+  if (g_captureAnimation) {
+    if (g_diffusionTest) {
+      gridCapturer = startRecording(fileNameStem + "PVC" + Math.round(100*world.inhibitorTotal / world.coatingDry) +
+                     "IA" + Math.round(100*world.inhibitorAccessible / world.inhibitorTotal) + "T",coatingNo);
+    } else {
+      gridCapturer = startRecording(fileNameStem + "PVC" + Math.round(100*world.inhibitorTotal / world.coatingDry) +
+                    "IA" + Math.round(100*world.inhibitorAccessible / world.inhibitorTotal) + "C",coatingNo);
+    }
+  }
+  if (pixiVersion == "6.0.0") {
+    renderer = new PIXI.Application({
+      width: myCanvas.width,
+      height: myCanvas.height,
+      view: myCanvas,
+    });
+    stage = renderer.stage;
+    frameText = new PIXI.Text("#: 0");
+    frameText.x = 5;
+    frameText.y = 5;
+    frameText.style.fill = "red";
+    frameText.style.fontSize = "10";
+    stage.addChild(frameText);
+  } else {
+    renderer =
+      renderer ||
+      new PIXI.autoDetectRenderer(
+        myCanvas.width,
+        myCanvas.height,
+        myCanvas,
+        { antialias: true, transparent: false }
+      );
+    // create the root of the scene graph
+    stage = stage || new PIXI.Stage(0xffffff);
+  }
+  textures = [];
+  pixels = [];
+  var textureCanvas = document.createElement("canvas");
+  textureCanvas.width = world.cellSize * world.palette.length;
+  textureCanvas.height = world.cellSize;
+  var textureCtx = textureCanvas.getContext("2d");
+  for (var i = 0; i < world.palette.length; i++) {
+    textureCtx.fillStyle = "rgba(" + world.palette[i] + ")";
+    textureCtx.fillRect(
+      i * world.cellSize,
+      0,
+      world.cellSize,
+      world.cellSize
+    );
+  }
+  if (pixiVersion == "6.0.0") {
+    var baseTexture = new PIXI.BaseTexture.from(textureCanvas);
+  } else {
+    var baseTexture = new PIXI.BaseTexture.fromCanvas(textureCanvas);
+  }
+  for (var i = 0; i < world.palette.length; i++) {
+    textures.push(
+      new PIXI.Texture(
+        baseTexture,
+        new PIXI.Rectangle(
+          i * world.cellSize,
+          0,
+          world.cellSize,
+          world.cellSize
+        )
+      )
+    );
+  }
+  drawGrid(pixels, world, stage, textures);
+  renderer.render(stage);
+}
+
 function loop() {
   if (g_allFinish) {
     return;
@@ -258,95 +333,10 @@ function loop() {
         "    Solubility: " +
         inhibitorSolubility;
       console.log(currentLabel);
-      myCanvas = document.getElementById("myCanvas");
-      myCanvas.width = world.cellSize * world.width;
-      myCanvas.height = world.cellSize * world.height;
-      if (g_captureAnimation) {
-        if (g_diffusionTest) {
-          gridCapturer = startRecording(fileNameStem + "PVC" + Math.round(100*world.inhibitorTotal / world.coatingDry) +
-                         "IA" + Math.round(100*world.inhibitorAccessible / world.inhibitorTotal) + "T",coatingNo);
-        } else {
-          gridCapturer = startRecording(fileNameStem + "PVC" + Math.round(100*world.inhibitorTotal / world.coatingDry) +
-                        "IA" + Math.round(100*world.inhibitorAccessible / world.inhibitorTotal) + "C",coatingNo);
-        }
-      }
-//      plotCapturer = startRecording(fileNameStem + "P",coatingNo);
-      if (pixiVersion == "5.3.3") {
-        //  app = new PIXI.Application({ width : myCanvas.width, height : myCanvas.height,
-        renderer = new PIXI.Application({
-          width: myCanvas.width,
-          height: myCanvas.height,
-          view: myCanvas,
-        });
-        //      stage = app.stage;
-        stage = renderer.stage;
-      } else {
-        renderer =
-          renderer ||
-          new PIXI.autoDetectRenderer(
-            myCanvas.width,
-            myCanvas.height,
-            myCanvas,
-            { antialias: true, transparent: false }
-          );
-        //      renderer = renderer || new PIXI.autoDetectRenderer(myCanvas.width, myCanvas.height, myCanvas, null, true); {antialias: true, transparent: false});
-        // create the root of the scene graph
-        stage = stage || new PIXI.Stage(0xffffff);
-      }
-      //    recorder = new CanvasRecorder(stage);
-      //	            forceCanvas: true, view : document.getElementById("myCanvas") });
-      //	  document.body.appendChild(app.view);
-      //      renderer = PIXI.Renderer({ width : myCanvas.width, height : myCanvas.height, view: myCanvas });
-      //renderer = PIXI.autoDetectRenderer(myCanvas.width, myCanvas.height, { view: myCanvas });
-      /*      renderer =
-        renderer ||
-        new PIXI.autoDetectRenderer(
-          myCanvas.width,
-          myCanvas.height,
-          myCanvas,
-          null,
-          true
-        );*/
 
-      // create the root of the scene graph
-      //      stage = app.stage;
-      //      stage = new PIXI.Container();
-      //      stage = stage || new PIXI.Stage(0xffffff);
-      textures = [];
-      pixels = [];
-      var textureCanvas = document.createElement("canvas");
-      textureCanvas.width = world.cellSize * world.palette.length;
-      textureCanvas.height = world.cellSize;
-      var textureCtx = textureCanvas.getContext("2d");
-      for (var i = 0; i < world.palette.length; i++) {
-        textureCtx.fillStyle = "rgba(" + world.palette[i] + ")";
-        textureCtx.fillRect(
-          i * world.cellSize,
-          0,
-          world.cellSize,
-          world.cellSize
-        );
-      }
-      if (pixiVersion == "5.3.3") {
-        var baseTexture = new PIXI.BaseTexture.from(textureCanvas);
-      } else {
-        var baseTexture = new PIXI.BaseTexture.fromCanvas(textureCanvas);
-      }
-      for (var i = 0; i < world.palette.length; i++) {
-        textures.push(
-          new PIXI.Texture(
-            baseTexture,
-            new PIXI.Rectangle(
-              i * world.cellSize,
-              0,
-              world.cellSize,
-              world.cellSize
-            )
-          )
-        );
-      }
-      drawGrid(pixels, world, stage, textures);
-      renderer.render(stage);
+      setupAnimation();
+
+
       $("#btnApplyChanges").removeClass("btn-danger");
       $("#btnApplyChanges").addClass("btn-success");
     } catch (ex) {
@@ -362,6 +352,7 @@ function loop() {
       if (g_captureAnimation) {
         console.log("filling the holes");
         updateGrid(pixels, world, textures);
+        stage.addChild(frameText);
         renderer.render(stage);
         gridCapturer.capture(renderer.view);
       }
@@ -375,7 +366,10 @@ function loop() {
             leachProgress.push([frames,world.leached/world.inhibitorTotal]);*/
       $("#currentstep").text(frames);
       if (!g_noUpdates) {
+
         updateGrid(pixels, world, textures);
+        frameText.text = "#: " + frames;
+        stage.addChild(frameText);
         //        app.render(stage);
         renderer.render(stage);
         //        capturer.capture(renderer.view);
@@ -545,7 +539,7 @@ function wrappedLoop() {
 function saveGrids() {
   ret = JSON.stringify(allStuff);
   var BB = new Blob([ret], { type: "text/plain;charset=UTF-8" });
-  saveAs(BB, fileNameStem + ".txt");
+//saving  saveAs(BB, fileNameStem + ".txt");
 }
 
 function changeStepFrames() {
@@ -575,7 +569,7 @@ function saveCurrentData() {
     );
   }
   var BB = new Blob([ret], { type: "text/plain;charset=UTF-8" });
-  saveAs(BB, fileNameStem + "GD" + ".txt");
+//saving  saveAs(BB, fileNameStem + "GD" + ".txt");
   //	multipleLeaches = JSON.parse(ret);
   //	multipleLeaches = JSON.parse(BB.slice(contentType="text/plain;charset=UTF8"));
 }
@@ -618,9 +612,12 @@ function reloadExample(example) {
 function updateGrid(pixels, world, textures) {
   for (var y = 0; y < world.height; y++) {
     for (var x = 0; x < world.width; x++) {
+      if (world.grid[y][x].cellType === undefined) {
+        console.log("undefined type ",x,y);
+      };
       var newColor = world.grid[y][x].getColor();
       if (newColor !== world.grid[y][x].oldColor) {
-        if (pixiVersion == "5.3.3") {
+        if (pixiVersion == "6.0.0") {
           pixels[x + y * world.width].texture = textures[newColor];
         } else {
 //          console.log('updategraphics',x,y,world.width);
