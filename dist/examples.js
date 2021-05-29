@@ -193,12 +193,12 @@ function placeParticle(particle,xcentre,ycentre,radius,particleNo){
             yyc
           );*/
           particleID[yyc][xxc] = particleNo;
-          if (pixiVersion == "6.0.0") {
-            pixels[xxc + yyc * world.width].texture = textures[particleNo];
-          } else {
+//????          if (pixiVersion > 4) {
+//????            pixels[xxc + yyc * world.width].texture = textures[particleNo];
+//????          } else {
   //          console.log('updategraphics',x,y,world.width);
-            pixels[xxc + yyc * world.width].setTexture(textures[particleNo]);
-          }
+//????            pixels[xxc + yyc * world.width].setTexture(textures[particleNo]);
+//????          }
         }
       }
     }
@@ -247,20 +247,23 @@ function insertParticles(disc){
         if (!touching) {
 //console.log("middle of particle ",particle[radius]);
 //console.log("before hollow ",countCells(particle,radius));
-          particle = hollowParticle(particle,radius);
+
+//CleverBit?          particle = hollowParticle(particle,radius);
+
+
 //console.log("middle of particle ",particle[radius]);
 //console.log("after hollow ",countCells(particle,radius));*/
           placeParticle(particle,xcentre,ycentre,radius,l);
           placedParticle = true;
         }
-        console.log('may place');
+//console.log('may place');
       } while (!placedParticle && placingTry < 1000);
       if (placedParticle) {
-        console.log('particle placed ',l);
+//console.log('particle placed ',l);
 //        updateGrid(pixels, world, textures);
 //        renderer.render(stage);
       } else {
-        console.log('particle NOT placed')
+//console.log('particle NOT placed')
       }
     }
   }
@@ -274,7 +277,7 @@ function updateSimpleGrid(pixels, world, textures) {
       };
       var newColor = world.grid[y][x].getColor();
       if (newColor !== world.grid[y][x].oldColor) {
-        if (pixiVersion == "6.0.0") {
+        if (pixiVersion > 4) {
           pixels[x + y * world.width].texture = textures[newColor];
         } else {
 //          console.log('updategraphics',x,y,world.width);
@@ -400,13 +403,13 @@ function makeCoating() {
       { name: "inhibitor", distribution: 0 },
       { name: "water", distribution: 0 },
     ]);
-    setupAnimation();
+//?????    setupAnimation();
 
 //    console.log("world grid 1 2 - ", world.grid[1][2]);
 
 //    console.log("this bit has been done");
-    drawGrid(pixels, world, stage, textures);
-    renderer.render(stage);
+//????    drawGrid(pixels, world, stage, textures);
+//????    renderer.render(stage);
 
     //      updateGrid(pixels, world, textures);
     //      renderer.render(stage);
@@ -442,11 +445,11 @@ function makeCoating() {
       r2 = radius * radius;
       var disc = [];
       var i2 = [];
-  console.log(i2);
+//console.log(i2);
       for (var i = 0; i <= radius; i++) {
         i2[i] = i * i;
       }
-console.log("i2[0] ",i2[0]);
+//console.log("i2[0] ",i2[0]);
 
       //			Make a disc
       discInhibitor = 0;
@@ -613,7 +616,7 @@ console.log("tries - ",tries,"genPVC - ",genPVC);
     var previous = -1;
     do {
       previous = inhibitorAccessible;
-      console.log("about to step");
+//console.log("about to step");
       world.step();
     } while (previous != inhibitorAccessible);
 //    resolve(inhibitorAccessible);

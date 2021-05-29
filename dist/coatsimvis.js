@@ -151,6 +151,7 @@ window.onload = function () {
   // Check for the various File API support.
   pixiVersion = PIXI.VERSION;
   console.log("PixiJS version - " + pixiVersion);
+  pixiVersion = pixiVersion.charAt(0);
   if (window.File && window.FileReader && window.FileList && window.Blob) {
     // Great success! All the File APIs are supported.
   } else {
@@ -208,6 +209,7 @@ window.onload = function () {
 };
 
 function setupAnimation(){
+console.log("setting up Animation");
   myCanvas = document.getElementById("myCanvas");
   myCanvas.width = world.cellSize * world.width;
   myCanvas.height = world.cellSize * world.height;
@@ -220,7 +222,7 @@ function setupAnimation(){
                     "IA" + Math.round(100*world.inhibitorAccessible / world.inhibitorTotal) + "C",coatingNo);
     }
   }
-  if (pixiVersion == "6.0.0") {
+  if (pixiVersion > 4) {
     renderer = new PIXI.Application({
       width: myCanvas.width,
       height: myCanvas.height,
@@ -247,6 +249,7 @@ function setupAnimation(){
   }
   textures = [];
   pixels = [];
+// local but I think only used here - textureCanvas, textureCtx, baseTexture
   var textureCanvas = document.createElement("canvas");
   textureCanvas.width = world.cellSize * world.palette.length;
   textureCanvas.height = world.cellSize;
@@ -260,7 +263,7 @@ function setupAnimation(){
       world.cellSize
     );
   }
-  if (pixiVersion == "6.0.0") {
+  if (pixiVersion > 4) {
     var baseTexture = new PIXI.BaseTexture.from(textureCanvas);
   } else {
     var baseTexture = new PIXI.BaseTexture.fromCanvas(textureCanvas);
@@ -280,13 +283,16 @@ function setupAnimation(){
   }
   drawGrid(pixels, world, stage, textures);
   renderer.render(stage);
+console.log("set up Animation");
 }
 
 function loop() {
+//console.log("into loop");
   if (g_allFinish) {
     return;
   }
   if (firstTime) {
+//console.log("into loop - first time");
     try {
       coatingNo += 1;
       if (allStuff.length < coatingNo + 1) {
@@ -337,6 +343,7 @@ function loop() {
       setupAnimation();
 
 
+
       $("#btnApplyChanges").removeClass("btn-danger");
       $("#btnApplyChanges").addClass("btn-success");
     } catch (ex) {
@@ -347,14 +354,16 @@ function loop() {
     firstTime = false;
   }
   if (g_running) {
+//console.log("into loop - again");
     // Draw before anything happens
     if (frames == 0) {
       if (g_captureAnimation) {
-        console.log("filling the holes");
+console.log("filling the holes");
         updateGrid(pixels, world, textures);
         stage.addChild(frameText);
         renderer.render(stage);
         gridCapturer.capture(renderer.view);
+console.log("filled the holes");
       }
     }
     world.step();
@@ -459,8 +468,10 @@ function loop() {
     ) {
       requestAnimationFrame(loop);
       if (g_captureAnimation) {
+//console.log("rending");
         renderer.render(stage);
         gridCapturer.capture(renderer.view);
+//console.log("rended");
       }
 //      plotCapturer.capture(myPlot);
     } else {
@@ -469,9 +480,11 @@ function loop() {
       firstTime = true;
       requestAnimationFrame(loop);
       if (g_captureAnimation) {
+console.log("stopping rending");
         renderer.render(stage);
         gridCapturer.capture(renderer.view);
         stopRecording(gridCapturer);
+console.log("stopped rending");
       }
 //      plotCapturer.capture(myPlot);
 //      stopRecording(plotCapturer);
@@ -539,7 +552,8 @@ function wrappedLoop() {
 function saveGrids() {
   ret = JSON.stringify(allStuff);
   var BB = new Blob([ret], { type: "text/plain;charset=UTF-8" });
-//saving  saveAs(BB, fileNameStem + ".txt");
+//saving
+  saveAs(BB, fileNameStem + ".txt");
 }
 
 function changeStepFrames() {
@@ -569,7 +583,8 @@ function saveCurrentData() {
     );
   }
   var BB = new Blob([ret], { type: "text/plain;charset=UTF-8" });
-//saving  saveAs(BB, fileNameStem + "GD" + ".txt");
+//saving
+  saveAs(BB, fileNameStem + "GD" + ".txt");
   //	multipleLeaches = JSON.parse(ret);
   //	multipleLeaches = JSON.parse(BB.slice(contentType="text/plain;charset=UTF8"));
 }
@@ -617,7 +632,7 @@ function updateGrid(pixels, world, textures) {
       };
       var newColor = world.grid[y][x].getColor();
       if (newColor !== world.grid[y][x].oldColor) {
-        if (pixiVersion == "6.0.0") {
+        if (pixiVersion > 4) {
           pixels[x + y * world.width].texture = textures[newColor];
         } else {
 //          console.log('updategraphics',x,y,world.width);
