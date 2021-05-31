@@ -11,7 +11,8 @@ var firstTime, g_endFraction;
 var g_running = true;
 var g_globalPlots = false;
 var maxFrames, maxLeached;
-var g_topwater, g_topcoat, g_scribed, g_topLeak, g_leftLeak, g_rightLeak, g_bottomLeak, g_manualInter, g_diffusionTest, g_gridFromCA, g_xSqrt, g_quickFinish, g_allFinish, g_allClosed, g_captureAnimation, g_capturePlot;
+var g_topwater, g_topcoat, g_scribed, g_topLeak, g_leftLeak, g_rightLeak, g_bottomLeak, g_manualInter, g_diffusionTest, g_gridFromCA, g_xSqrt;
+var g_quickFinish, g_allFinish, g_allClosed, g_saveGrids, g_saveGraphs, g_captureAnimation, g_capturePlot;
 var inhibitorSolubility, inhibitorDensity, maximumParticle, minimumParticle, radius, maximumPVC, minimumPVC, coatingNo, inhibitorAccessible, inhibitorTotal;
 var g_grid;
 var loopFinished = false;
@@ -143,6 +144,8 @@ function updateFromPage() {
   g_leftLeak = changeCheck("#leftleak");
   g_rightLeak = changeCheck("#rightleak");
   g_bottomLeak = changeCheck("#bottomleak");
+  g_saveGrids = changeCheck("#savegrids");
+  g_saveGraphs = changeCheck("#savegraphs");
   g_captureAnimation = changeCheck("#captureanimation");
   g_capturePlot = changeCheck("#captureplot");
 }
@@ -503,7 +506,9 @@ console.log("stopped rending");
             graphPicture('#Legend',(fileNameStem+'XYL'),coatingNo);
           }
         }
-        saveCurrentData();
+        if(g_saveGraphs) {
+          saveCurrentData();
+        }
       }
     };
   };
@@ -541,7 +546,9 @@ function coatingBit(stuff) {
         (inhibitorAccessible / inhibitorTotal).toPrecision(2)
     );
   };
-  saveGrids();
+  if(g_saveGrids){
+    saveGrids();
+  }
 };
 
 function wrappedLoop() {
@@ -556,6 +563,21 @@ function saveGrids() {
   var BB = new Blob([ret], { type: "text/plain;charset=UTF-8" });
 //saving
   saveAs(BB, fileNameStem + ".txt");
+}
+
+function loadGrids(allStuff) {
+  for (const record of allStuff) {
+    //      record = allStuff[i];
+    grid = record[0];
+    particleID = record[1];
+    coatingDry = record[2][4];
+    binderTotal = record[2][5];
+    inhibitorTotal = record[2][6];
+    inhibitorAccessible = record[2][7];
+    console.log("Coating Dry " + coatingDry);
+    console.log("Inhibitor accessible " + inhibitorAccessible);
+    requestAnimationFrame(loop);
+  }
 }
 
 function changeStepFrames() {

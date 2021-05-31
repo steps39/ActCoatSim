@@ -85,17 +85,6 @@
                 </div>
                 <div class="row">
                     <div class="col-sm-5">
-                        <label for="gridfromca" class="col-sm-5 control-label">CA Microstructure</label>
-                        <input name="gridfromca" id="gridfromca" class="form-check-input" type="checkbox">
-                    </div>
-                    <div class="col-sm-5">
-                        <label for="nostrucsteps" class="col-sm-5 control-label">No Refinement Steps</label>
-                        <input name="nostrucsteps" id="nostrucsteps" class="form-control" type="number" value="15" min="1"
-                            style="width: 96px" />
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-sm-5">
                         <label for="waterontop" class="col-sm-5 control-label">Top Water</label>
                         <input name="waterontop" id="waterontop" class="form-check-input" type="checkbox" checked>
                     </div>
@@ -125,6 +114,17 @@
                         <label for="sizeofscribe" class="col-sm-5 control-label">Size of Scribe</label>
                         <input name="sizeofscribe" id="sizeofscribe" class="form-control" type="number" value="10"
                             min="1" style="width: 96px" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-5">
+                        <label for="gridfromca" class="col-sm-5 control-label">CA Microstructure</label>
+                        <input name="gridfromca" id="gridfromca" class="form-check-input" type="checkbox">
+                    </div>
+                    <div class="col-sm-5">
+                        <label for="nostrucsteps" class="col-sm-5 control-label">No Refinement Steps</label>
+                        <input name="nostrucsteps" id="nostrucsteps" class="form-control" type="number" value="15" min="1"
+                            style="width: 96px" />
                     </div>
                 </div>
                 <div class="row">
@@ -227,6 +227,40 @@
             <h3>Running</h3>
             <div class="row">
                 <div class="col-sm-5">
+                    <label for="plotCheckbox" class="col-sm-5 control-label">Global Plot</label>
+                    <input name="plotCheckbox" id="plotCheckbox" class="form-check-input" type="checkbox" checked>
+                </div>
+                <div class="col-sm-5">
+                    <label for="xsqrt" class="col-sm-5 control-label">X Square Root</label>
+                    <input name="xsqrt" id="xsqrt" class="form-check-input" type="checkbox" checked>
+                </div>
+            </div>
+            <div class="row">
+                <div class="row">
+                    <div class="col-sm-5">
+                        <label for="savegrids" class="col-sm-5 control-label">Save Generated Coatings</label>
+                        <input name="savegrids" id="savegrids" class="form-check-input" type="checkbox">
+                    </div>
+                    <div class="col-sm-5">
+                        <label for="savegraphs" class="col-sm-5 control-label">Save Graphs</label>
+                        <input name="savegraphs" id="savegraphs" class="form-check-input" type="checkbox">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="row">
+                    <div class="col-sm-5">
+                        <label for="captureanimation" class="col-sm-5 control-label">Capture animation to webm</label>
+                        <input name="captureanimation" id="captureanimation" class="form-check-input" type="checkbox">
+                    </div>
+                    <div class="col-sm-5">
+                        <label for="captureplot" class="col-sm-5 control-label">Capture plot to png</label>
+                        <input name="captureplot" id="captureplot" class="form-check-input" type="checkbox">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-5">
                     <label for="numFrames" class="col-sm-5 control-label">Number of frames</label>
                     <input name="numFrames" id="numFrames" class="form-control" type="number" value="3" min="1"
                         style="width: 96px" />
@@ -246,28 +280,6 @@
                 <div class="col-sm-5">
                     <label for="noupdates" class="col-sm-5 control-label">No Visual Updates</label>
                     <input name="noupdates" id="noupdates" class="form-check-input" type="checkbox">
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-5">
-                    <label for="plotCheckbox" class="col-sm-5 control-label">Global Plot</label>
-                    <input name="plotCheckbox" id="plotCheckbox" class="form-check-input" type="checkbox" checked>
-                </div>
-                <div class="col-sm-5">
-                    <label for="xsqrt" class="col-sm-5 control-label">X Square Root</label>
-                    <input name="xsqrt" id="xsqrt" class="form-check-input" type="checkbox" checked>
-                </div>
-            </div>
-            <div class="row">
-                <div class="row">
-                    <div class="col-sm-5">
-                        <label for="captureanimation" class="col-sm-5 control-label">Capture animation to webm</label>
-                        <input name="captureanimation" id="captureanimation" class="form-check-input" type="checkbox">
-                    </div>
-                    <div class="col-sm-5">
-                        <label for="captureplot" class="col-sm-5 control-label">Capture plot to png</label>
-                        <input name="captureplot" id="captureplot" class="form-check-input" type="checkbox">
-                    </div>
                 </div>
             </div>
             <!--div class="row">
