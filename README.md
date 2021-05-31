@@ -1,34 +1,67 @@
-A work in progress inspired by and using the cellauto.js library - http://sanojian.github.io/cellauto/ a very clever small Javascript library.
+Active corrosion protection of metals by primer(paint/coating) works by having a slightly soluble corrosion inhibitor embedded within the coating, such that if the coating system is damaged and the metal is exposed to a corrosive environment, then the inhibitor will leach from the primer and inhibit any further corrosion of the metal surface.  It was always assumed that the corrosin inhibitor leached through the polymeric binder, but recent work has found that the primary source of corrosion inhibitor is via transport through the pores left behind by previously dissolved corrosion inhbitor particles.
 
-The current simulation works by first using cellular automata to generate the polymer with the filler within it, then uses cellular automata to rapidly count the number of filler cells to calculate the PVC and then the leaching is carried out using cellular automata to mimick the dissolution of the inhibitor and the trasnport of leached inhibitor.
+ActCoatSim is a 2D simulation of the leaching of corrosion inhibitor from an active corrosion protection coating system which is immersed in a corrosive environment.  The primer is simiplified in that is consists of just the continuous polymeric binder and corrosion inhibitor particles.  The coating system can consist of the primer in contact with the metal to be protected, a top coat (which is considered to be inert) and a scribe (an area of damaged through whichthe metal is exposed to the environment).
 
-On loading this page the simulation will start, the graph displays the fraction of the coating which has been leached (diffused to top of the box), the legend below the plot shows the inhibitor PVC, the fraction of the inhibitor PVC which could be leached (i.e. not surrounded by polymer with no water access).  So the maximum cumulative fraction of the coating which will leach is the PVC multiplied by the accessible fraction.
-
-A number of parameters of the simulation can be varied.  The inhibitor density and the inhibitor solubility (both in arbitary integer units), this will control the speed of leaching as for a cell of inhibitor with an inhibitor density of 9 and an inhibitor solubility of 1, it will take 9 dissolution events for it to disolve, where if the inhibitor density was 1 then it would only require 1 dissolution event.  The diffusion probability and solubility probability, determine how likely diffusion or dissolution is to occur in a single step, 1 means every time, another way to slow down the various steps.  The terminal fraction determines when a new structure will be generated, so 0.3 means 30% of the accessible fraction will be leached before a new structure is generated.
-
-The coating is able to be pure primer, primer with a scribe or primer and topcoat with scribe, all of these with / without topcoat.  A primer and topcoat without a scribe will not do anything, as at present the topcoat is impermeable.
+The coating is able to be pure primer, primer with a scribe or primer and topcoat with scribe, all of these with / without topcoat.  A primer and topcoat without a scribe will not do anything, as the topcoat is impermeable.  Coating is considered to have leached whn it leaves the simulation box, so water layer thicknesses of 1 will be equivalent to leaching directly at primer surface.
 
 The simulation provides a very effective insight into how small differeneces in particle connectivity will give rise to large differences in leaching performance.
 
-Getting started:
+The current simulation works by first using either a particle packing or cellular automaton method to generate the primer with the corrosion inhibitor within it, then uses cellular automata to rapidly count the number of inhibitor cells to calculate the particle volume concentration (PVC) and then the leaching is carried out using cellular automata to mimick the dissolution of the inhibitor and the trasnport of leached inhibitor.
 
-When the page first loads you will be shown a cross-section of a primer, brown coating with purplish inhibitor within it, in order to start leaching the "Top Water" check box is checked introducing water, which will leach the inhibitor from the coating.  If you click the "Regnerate" button, this will create a new coating with a different cross-section of primer.  The new primer's leaching graph will added to the previous plot.
+You can run ActCoatSim at https://steps39.github.io/ActCoatSim/
 
-Button use:
+On pressing the **Full Reset** button the simulation will start (using the default parameters) showing the dissolution of the inhibitor particles, transport into solution and the graph displays the fraction of the coating which has been leached (diffused to top of the box) where the legend below the plot shows the inhibitor PVC, the fraction of the inhibitor PVC which could be leached (i.e. not surrounded by polymer with no water access).  So the maximum cumulative fraction of the coating which will leach is the PVC multiplied by the accessible fraction.
 
-Pause / Play - will stop and start the current simulation.
+# Microstructure Parameters #
 
-Regenerate - will generate a new filled polymer and start a new simulation using the currently displayed parameter values, but will continue to plot on the same graph.
+The system to be used in the simulation is generated based on the value on the Microstructure Parameters tab - 
+**Check diffusion** - a simple test to show that the cellular automaton mimics diffusion behaviour by genearting a circle - if ticked ignore all other parameters
+The coating system is controlled by whether there is:
+water above the coating system and its depth - **Top Water** / **Depth of Water**
+a top coat above the primer coating and its depth - **Topcoated** / **Depth of Topcoat**
+a scribe at the left edge of the coatings and its with - **Scribed** / **Width of Scribe**
 
-Full reset - will discard all previous results, generate a new filled polymer and start a new simulation using the currently displayed parameter value, creating a new graph.
+The primer is generated by:
+Either using a cellular automaton:
+**CA Microstructure** - produces a coatings based on a simple cellular automaton rule which produces a cave like structure - only structural parameter which affects this generation is:
+**No Refinement Steps** - is the number of iterations the CA rule is run for.
+Or by a particle packing approach which does not allow overlapping particles:
+The particles are generated as a particular shape (currently circles) of a size defined by **Radius** which undergo a **No of Particle Cuts** to produce more realistic random particle shapes, upto **No of Particles** are produced.  Not yet implemented is the ability restrict the range of the particles' sizes based on a **Minimum Particle Size** and a **Maximum Particle Size**.  Particles are packed until the particle volume concentration (PVC) is within the ranage **Minimum PVC** to **Maximum PVC**.
 
-Paramters:
+# Simulation Parameters #
 
-Inhibitor density and Inhibitor solubility are described above.
+A number of parameters of the simulation can be varied.  The **Inhibitor Density** and the **Inhibitor Solubility** (both in arbitary integer units), will control the speed of leaching as for a cell of inhibitor with an inhibitor density of 9 and an inhibitor solubility of 1, it will take 9 dissolution events for it to disolve, where if the inhibitor density was 1 then it would only require 1 dissolution event.  _As yet unimplemented, the **Diffusion Probability** and **Solubility Probability**, determine how likely diffusion or dissolution is to occur in a single step, 1 means every time, another way to slow down the various steps._
 
-Number of frames is the number of time steps which need to occur before the simulation is updated.
+If simulating a scribed coating then set **Loose from Top** and **Loose from Left** at least, **Loose from Bottom** could be considered as the protective interaction with the metal surface.
 
-Number of plot is the number of time steps which need to occur before the graph is updated.
+# Simulation Controls #
 
-The plot autoscales with the latest result of the current run always in the top right making it easy to follow the current simulation.  Checking Global will fix the scale with the maximum of all the runs, so all data will be visible.
+These are specific parameters which control how the simulation is run.
 
+The **Terminal Fraction** determines how far the simulation will run, this the fraction of the accessible inhibitor which will be leached before the simulation is stopped, i.e. Inhibitor PVC 0.5 Accessible 0.5 Terminal Fraction 0.8 would mean the simulation would stop once 0.2 cumlative fracton of the coaitng had leached.
+
+The plot can either auto-scale based on the current point being plot being maximum X and Y or if **Global Plot** ticked then will scale such as to display all data currently generated and the x-axis can be set to square root for a more normal diffusion relationship - **X Square Root**.
+
+The data generated during the coating generation and simulation can be saved - coating microstructures - **Save Generated Coatings**, leaching graphs - **Save Graphs**, movies of the cellular automaton - **Capture Animaton to Webm** and an image of the leaching graphs with separate legend - **Capture Plot to PNG**.
+
+The realtime display is controlled by interval between each displayed frame - **Number of Frames** and how often the graph is replotted - **Number of Plots x Number of Frames**.  All updates of animation and graph can be stopped - **No Visual Updates**.
+
+# Getting Started #
+
+When you have set the parameters for your simulation, then pressed **Full Reset** the page loads a cross-section of a primer, grey coating with inhibitor within it, in order to start leaching the "Top Water" check box is checked introducing water, which will leach the inhibitor from the coating.
+
+# Button Function #
+
+_Not implemented - **Pause** / **Play** - will stop and start the current simulation._
+
+_Not implemented - **Regenerate** - will generate a new filled polymer and start a new simulation using the currently displayed parameter values, but will continue to plot on the same graph._
+
+**Full reset** - will discard all previous results, generate a new coating system and start a new simulation using the currently displayed parameter value, creating a new graph.
+
+_No implemented - **Save Data**._
+
+**End All Runs** - stop the current set of simulations, completing all saves if requested.
+
+**End Current Run** - stop the currernt simulation, saving the animation is requested.
+
+Inspired by and using the cellauto.js library - http://sanojian.github.io/cellauto/ a very clever small Javascript library.
