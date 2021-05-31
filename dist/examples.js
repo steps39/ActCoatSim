@@ -218,53 +218,33 @@ function countCells(particle,radius){
 }
 
 function insertParticles(disc){
-          //			Create particles
-//        console.log('create particles');
-//        console.log(discInhibitor);
+//			Create particles
   for (var l = 0; l < noOfParticles; l++) {
-
     var particle = deepCopy(disc);
     touching = 1;
     attempts = 0;
     placedParticle = true;
     for (; touching != 0 && attempts < 1; ) {
       attempts += 1;
-      //					Create a particle
       particleInhibitor = discInhibitor;
       particle = createParticle(noOfCuts,particle);
-
-  //            					console.log(particleInhibitor);
       var placingTry = 0;
-
       do {
-        //						Test for overlap of the particle inside the grid
+        //Test for overlap of the particle inside the grid
         placingTry = placingTry + 1;
         placedParticle = false;
         ycentre = Math.floor(world.height * Math.random());
         xcentre = Math.floor(world.width * Math.random());
         touching = checkParticle(particle,xcentre,ycentre,radius);
-        //				If no overlap then place particle in grid
+        //If no overlap then place particle in grid
         if (!touching) {
-//console.log("middle of particle ",particle[radius]);
-//console.log("before hollow ",countCells(particle,radius));
 
 //CleverBit?          particle = hollowParticle(particle,radius);
 
-
-//console.log("middle of particle ",particle[radius]);
-//console.log("after hollow ",countCells(particle,radius));*/
           placeParticle(particle,xcentre,ycentre,radius,l);
           placedParticle = true;
         }
-//console.log('may place');
       } while (!placedParticle && placingTry < 1000);
-      if (placedParticle) {
-//console.log('particle placed ',l);
-//        updateGrid(pixels, world, textures);
-//        renderer.render(stage);
-      } else {
-//console.log('particle NOT placed')
-      }
     }
   }
 }
@@ -289,18 +269,51 @@ function updateSimpleGrid(pixels, world, textures) {
   }
 }
 
+function makeDisc(radius) {
+  square = true;
+  var disc = [];
+  if (!square) {
+    //Set up square list
+    r2 = radius * radius;
+    var i2 = [];
+    for (var i = 0; i <= radius; i++) {
+      i2[i] = i * i;
+    }
+    //Make a circle
+    discInhibitor = 0;
+    for (var y = -radius; y <= radius; y++) {
+      disc[radius + y] = [];
+      for (var x = -radius; x <= radius; x++) {
+        if (i2[Math.abs(y)] + i2[Math.abs(x)] <= r2) {
+          disc[radius + y][radius + x] = 0;
+          discInhibitor += 1;
+        } else {
+          disc[radius + y][radius + x] = 1;
+        }
+      }
+    }
+  } else {
+    //Make a square
+    discInhibitor = 0;
+    for (var y = -radius; y <= radius; y++) {
+      disc[radius + y] = [];
+      for (var x = -radius; x <= radius; x++) {
+        disc[radius + y][radius + x] = 0;
+        discInhibitor += 1;
+    }
+    }
+  }
+  return disc;
+}
 
-//var makeCoating = new Promise (function(resolve, reject) {
 function makeCoating() {
-  // FIRST CREATE BINDER
+  //First create binder
   world = new CAWorld({
     width: 96,
     height: 64,
     cellSize: 6,
   });
-
   setWorldPalette();
-
   inhibitorTotal = 0;
   binderTotal = 0;
   topOfPrimer = 0;
@@ -352,18 +365,18 @@ function makeCoating() {
         //          console.log("partilce");
         this.particleID = particleID[this.y][this.x];
       } else {
-        this.particleID = 10;
+        this.particleID = 10;//???
       }
     }
   );
 
-  world.registerCellType("polymer", {
+/*  world.registerCellType("polymer", {
     isSolid: true,
     getColor: function () {
       return this.lighted ? inhibitorDensity + 1 : inhibitorDensity + 2;
     },
   });
-
+*/
   world.registerCellType(
     "binder",
     {
@@ -403,20 +416,9 @@ function makeCoating() {
       { name: "inhibitor", distribution: 0 },
       { name: "water", distribution: 0 },
     ]);
-//?????    setupAnimation();
-
-//    console.log("world grid 1 2 - ", world.grid[1][2]);
-
-//    console.log("this bit has been done");
-//????    drawGrid(pixels, world, stage, textures);
-//????    renderer.render(stage);
-
-    //      updateGrid(pixels, world, textures);
-    //      renderer.render(stage);
-
+    //Cellular automaton coating generation
     if (g_gridFromCA) {
       particleID = null;
-      //srg        noStrucSteps = parseInt($("#nostrucsteps").val(), 10);
       // generate our coating, 10 steps ought to do it
       for (var i = 0; i < noStrucSteps; i++) {
         world.step();
@@ -426,11 +428,7 @@ function makeCoating() {
       [{ cellType: "binder", hasProperty: "open", value: 0 }],
       1
     );
-
-//    console.log("world grid 1 2 - ", world.grid[1][2]);
-
     particleID = [];
-
     for (y = 0; y < world.height; y++) {
       particleID[y] = [];
       for (x = 0; x < world.width; x++) {
@@ -438,36 +436,10 @@ function makeCoating() {
       }
     }
 
+    //Particle placing coating generation
     if (!g_gridFromCA) {
-      //			Set up square list
       radius = parseInt($("#radius").val(), 10);
-
-      r2 = radius * radius;
-      var disc = [];
-      var i2 = [];
-//console.log(i2);
-      for (var i = 0; i <= radius; i++) {
-        i2[i] = i * i;
-      }
-//console.log("i2[0] ",i2[0]);
-
-      //			Make a disc
-      discInhibitor = 0;
-      for (var y = -radius; y <= radius; y++) {
-//console.log("y ",y);
-        disc[radius + y] = [];
-        for (var x = -radius; x <= radius; x++) {
-          if (i2[Math.abs(y)] + i2[Math.abs(x)] <= r2) {
-            disc[radius + y][radius + x] = 0;
-            discInhibitor += 1;
-          } else {
-            //console.log("Stufdsfs",radius+y,radius+x);
-            //console.log(disc);
-            disc[radius + y][radius + x] = 1;
-          }
-        }
-      }
-
+      disc = makeDisc(radius);
       noOfParticles = parseInt($("#noofparticles").val(), 10);
       noOfCuts = parseInt($("#noofcuts").val(), 10);
       insertParticles(disc);
@@ -478,9 +450,6 @@ function makeCoating() {
     } else {
       primerStart = 0;
     }
-    // console.log("top of primer " + topOfPrimer);
-    // console.log("primer start " + primerStart);
-    // console.log("Depth of water ", depthOfWater);
     for (var y = topOfPrimer; y < world.height; y++) {
       for (var x = primerStart; x < world.width; x++) {
         if (grid[y][x] === 0) {
@@ -496,9 +465,7 @@ console.log("tries - ",tries,"genPVC - ",genPVC);
     if(tries>10){
       break;
     }
-} while (!(genPVC > minimumPVC && genPVC < maximumPVC));
-//} while ((!(genPVC > minimumPVC && genPVC < maximumPVC)) && tries < 100);
-
+  } while (!(genPVC > minimumPVC && genPVC < maximumPVC));
   if (g_topcoat) {
     // fill the cell with topcoat
     for (var y = depthOfWater; y < depthOfWater + depthOfTopcoat; y++) {
@@ -517,7 +484,6 @@ console.log("tries - ",tries,"genPVC - ",genPVC);
 
   if (g_scribed) {
     // scribe the coating
-//    for (var y = depthOfWater; y < world.height; y++) {
     for (var y = 0; y < world.height; y++) {
       for (var x = 0; x < sizeOfScribe; x++) {
         grid[y][x] = 0;
@@ -540,16 +506,12 @@ console.log("tries - ",tries,"genPVC - ",genPVC);
 		cellSize: 6,
 		clearRect: true
 	});*/
-
     inhibitorAccessible = 0;
-
     world.palette = [];
     world.palette.push("89, 125, 206, 1");
     world.palette.push("189, 125, 206, 1");
     world.palette.push("109, 170, 44, 1");
     world.palette.push("68, 36, 52, 1");
-
-
     world.registerCellType(
       "water",
       {

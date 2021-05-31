@@ -11,7 +11,7 @@ var firstTime, g_endFraction;
 var g_running = true;
 var g_globalPlots = false;
 var maxFrames, maxLeached;
-var g_topwater, g_topcoat, g_scribed, g_topLeak, g_leftLeak, g_rightLeak, g_bottomLeak, g_manualInter, g_diffusionTest, g_gridFromCA, g_xSqrt, g_quickFinish, g_allFinish, g_captureAnimation, g_capturePlot;
+var g_topwater, g_topcoat, g_scribed, g_topLeak, g_leftLeak, g_rightLeak, g_bottomLeak, g_manualInter, g_diffusionTest, g_gridFromCA, g_xSqrt, g_quickFinish, g_allFinish, g_allClosed, g_captureAnimation, g_capturePlot;
 var inhibitorSolubility, inhibitorDensity, maximumParticle, minimumParticle, radius, maximumPVC, minimumPVC, coatingNo, inhibitorAccessible, inhibitorTotal;
 var g_grid;
 var loopFinished = false;
@@ -179,6 +179,13 @@ window.onload = function () {
   $("#btnReloadData").on("click", function (evt) {
     reloadData();
   });
+  $("#btnAllFinish").on("click", function (evt) {
+    g_allFinish = true;
+  });
+  $("#btnQuickFinish").on("click", function (evt) {
+    g_quickFinish = true;
+  });
+
   $("#endfraction").on("change", function (evt) {
     g_endFraction = changeFloat("#endfraction");
   });
@@ -197,12 +204,6 @@ window.onload = function () {
   $("#xsqrt").on("change", function (evt) {
     g_xSqrt = changeCheck("#xsqrt");
   });
-  $("#quickfinish").on("change", function (evt) {
-    g_quickFinish = changeCheck("#quickfinish");
-  });
-/*  $("#allfinish").on("change", function (evt) {
-    g_allFinish = changeCheck("#allfinish");
-  });*/
   updateFromPage();
   // loadExample("leaching");
   firstTime = true;
@@ -288,7 +289,7 @@ console.log("set up Animation");
 
 function loop() {
 //console.log("into loop");
-  if (g_allFinish) {
+  if (g_allFinish && g_allClosed) {
     return;
   }
   if (firstTime) {
@@ -461,7 +462,7 @@ console.log("filled the holes");
       }
     }
     frames++;
-    g_allFinish = changeCheck("#allfinish");
+//    g_allFinish = changeCheck("#allfinish");
     if (
       (world.leached < g_endFraction * world.inhibitorAccessible) &&
       !g_quickFinish && !g_allFinish
@@ -475,7 +476,7 @@ console.log("filled the holes");
       }
 //      plotCapturer.capture(myPlot);
     } else {
-      $("#quickfinish").prop("checked", false);
+//      $("#quickfinish").prop("checked", false);
       g_quickFinish = false;
       firstTime = true;
       requestAnimationFrame(loop);
@@ -489,6 +490,7 @@ console.log("stopped rending");
 //      plotCapturer.capture(myPlot);
 //      stopRecording(plotCapturer);
       if ((noSamples == (coatingNo + 1)) || g_allFinish) {
+        g_allClosed = true;
         if (g_capturePlot) {
           if (g_diffusionTest) {
             graphPicture('#Graph',(fileNameStem + "PVC" + Math.round(100*world.inhibitorTotal / world.coatingDry) +
@@ -614,14 +616,22 @@ function loadExample(example) {
   firstTime = true;
   leachProgress = [];
   coatingNo = -1;
-  $("#allfinish").prop("checked", false);
+//  $("#allfinish").prop("checked", false);
   g_allFinish = false;
+  g_allClosed = false;
   loop();
 }
 
 function reloadExample(example) {
   multipleLeaches.push({ label: currentLabel, data: leachProgress });
-  loadExample(example);
+  firstTime = true;
+  leachProgress = [];
+  coatingNo = -1;
+//  $("#allfinish").prop("checked", false);
+  g_allFinish = false;
+  g_allClosed = false;
+  loop();
+//  loadExample(example);
 }
 
 function updateGrid(pixels, world, textures) {
