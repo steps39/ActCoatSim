@@ -40,9 +40,9 @@ function makeTest() {
     world.palette = [];
     // Inhibitor density colour
     world.palette.push("89, 125, 206, 1");
-    for (var i = 1; i <= inhibitorDensity; i++) {
-  //    world.palette.push("189, 125, 206, " + ((i + 5) / (inhibitorDensity + 5))**2);
-      world.palette.push("189, 125, 206, " + (i / inhibitorDensity)**2);
+    for (var i = 1; i <= sp.inhibitorDensity; i++) {
+  //    world.palette.push("189, 125, 206, " + ((i + 5) / (sp.inhibitorDensity + 5))**2);
+      world.palette.push("189, 125, 206, " + (i / sp.inhibitorDensity)**2);
     }
     // Polymer surface and bulk
     world.palette.push("109, 170, 44, 1");
@@ -90,8 +90,8 @@ function makeTest() {
       world.palette.push('0,128,128,1');*/
     // Water
     world.palette.push("0,0,128,1");
-    noParticleColours = world.palette.length - (inhibitorDensity + 4);
-    world.depthOfWater = depthOfWater;
+    noParticleColours = world.palette.length - (sp.inhibitorDensity + 4);
+    world.ms.depthOfWater = ms.depthOfWater;
     world.inhibitorTotal = inhibitorTotal;
     world.inhibitorAccessible = inhibitorAccessible;
     world.binderTotal = binderTotal;
@@ -108,10 +108,10 @@ function makeTest() {
           if (this.inhibitor) {
             //inhibitor can escape on any side if allowed
             if (
-              ((g_topLeak && neighbors[world.TOP.index] === null) ||
-                (g_leftLeak && neighbors[world.LEFT.index] === null) ||
-                (g_rightLeak && neighbors[world.RIGHT.index] === null) ||
-                (g_bottomLeak && neighbors[world.BOTTOM.index] === null)) &&
+              ((sp.topLeak && neighbors[world.TOP.index] === null) ||
+                (sp.leftLeak && neighbors[world.LEFT.index] === null) ||
+                (sp.rightLeak && neighbors[world.RIGHT.index] === null) ||
+                (sp.bottomLeak && neighbors[world.BOTTOM.index] === null)) &&
               Math.random() < 1.02
             ) {
               world.leached += this.inhibitor;
@@ -123,9 +123,9 @@ function makeTest() {
               if (
                 neighbors[d[i]] !== null &&
                 neighbors[d[i]].cellType === "water" &&
-                neighbors[d[i]].inhibitor < inhibitorSolubility
+                neighbors[d[i]].inhibitor < sp.inhibitorSolubility
               ) {
-                if (Math.random() <= probDiffusion) {
+                if (Math.random() <= sp.probDiffuse) {
                   /*                  var amt = Math.min(
                       this.inhibitor,
                       9 - neighbors[d[i]].inhibitor
@@ -152,8 +152,8 @@ function makeTest() {
       {
         getColor: function () {
           //return '89, 125, 206, ' + (this.inhibitor ? Math.max(0.3, this.inhibitor/9) : 0);
-          if (this.inhibitor == inhibitorDensity) {
-            return (this.particleID % noParticleColours) + inhibitorDensity + 3;
+          if (this.inhibitor == sp.inhibitorDensity) {
+            return (this.particleID % noParticleColours) + sp.inhibitorDensity + 3;
           } else {
             return this.inhibitor;
           }
@@ -165,9 +165,9 @@ function makeTest() {
               if (
                 neighbors[d[i]] !== null &&
                 neighbors[d[i]].cellType === "water" &&
-                neighbors[d[i]].inhibitor < inhibitorSolubility
+                neighbors[d[i]].inhibitor < sp.inhibitorSolubility
               ) {
-                if (Math.random() <= probSolubility) {
+                if (Math.random() <= sp.probDissolve) {
                   /*                  var amt = Math.min(
                       this.inhibitor,
                       9 - neighbors[d[i]].inhibitor
@@ -191,9 +191,9 @@ function makeTest() {
       },
       function () {
         //init
-        this.inhibitor = inhibitorDensity;
+        this.inhibitor = sp.inhibitorDensity;
         //			console.log(this.x,this.y);
-        if (!g_gridFromCA) {
+        if (!ms.gridFromCA) {
           this.particleID = particleID[this.y][this.x];
         } else {
           this.particleID = 10;
@@ -225,18 +225,18 @@ function makeTest() {
     inhibitorTotal = 0;
     binderTotal = 0;
     topOfPrimer = 0;
-    if (g_topwater) {
-      topOfPrimer += depthOfWater;
+    if (ms.topWater) {
+      topOfPrimer += ms.depthOfWater;
     } else {
-      depthOfWater = 0;
+      ms.depthOfWater = 0;
     }
-    if (g_topcoat) {
-      topOfPrimer += depthOfTopcoat;
+    if (ms.topcoat) {
+      topOfPrimer += ms.depthOfTopcoat;
     } else {
-      depthOfTopcoat = 0;
+      ms.depthOfTopcoat = 0;
     }
-    if (inhibitorSolubility > inhibitorDensity) {
-      inhibitorSolubility = inhibitorDensity;
+    if (sp.inhibitorSolubility > sp.inhibitorDensity) {
+      sp.inhibitorSolubility = sp.inhibitorDensity;
     }
     var genPVC = -1.0;
     return world;
@@ -252,19 +252,19 @@ function example_barrier() {
       cellSize: 6,
     });
   
-    depthOfWater = 20;
+    ms.depthOfWater = 20;
     inhibitorTotal = 0;
     binderTotal = 0;
-    //	inhibitorSolubility = 1;
-    //	inhibitorDensity = 9;
-  //srg  inhibitorDensity = parseInt($("#inhibitordensity").val(), 10);
-  //srg  inhibitorSolubility = parseInt($("#inhibitorsolubility").val(), 10);
-    if (inhibitorSolubility > inhibitorDensity) {
-      inhibitorSolubility = inhibitorDensity;
+    //	sp.inhibitorSolubility = 1;
+    //	sp.inhibitorDensity = 9;
+  //srg  sp.inhibitorDensity = parseInt($("#inhibitordensity").val(), 10);
+  //srg  sp.inhibitorSolubility = parseInt($("#inhibitorsolubility").val(), 10);
+    if (sp.inhibitorSolubility > sp.inhibitorDensity) {
+      sp.inhibitorSolubility = sp.inhibitorDensity;
     }
     var genPVC = -1.0;
-  //srg  minimumPVC = parseFloat($("#minimumpvc").val());
-  //srg  maximumPVC = parseFloat($("#maximumpvc").val());
+  //srg  ms.minimumPVC = parseFloat($("#minimumpvc").val());
+  //srg  ms.maximumPVC = parseFloat($("#maximumpvc").val());
     world.registerCellType(
       "binder",
       {
@@ -302,7 +302,7 @@ function example_barrier() {
       );
   
       // fill holes in binder with inhibitor while counting
-      for (var y = depthOfWater; y < world.height; y++) {
+      for (var y = ms.depthOfWater; y < world.height; y++) {
         for (var x = 0; x < world.width; x++) {
           if (grid[y][x] === 0) {
             grid[y][x] = 2;
@@ -314,17 +314,17 @@ function example_barrier() {
       }
       genPVC = inhibitorTotal / (inhibitorTotal + binderTotal);
       //	console.log(genPVC)
-    } while (genPVC < minimumPVC || genPVC > maximumPVC);
+    } while (genPVC < ms.minimumPVC || genPVC > ms.maximumPVC);
   
     // fill the cell to depth of water with water
-    for (var y = 0; y < depthOfWater; y++) {
+    for (var y = 0; y < ms.depthOfWater; y++) {
       for (var x = 0; x < world.width; x++) {
         grid[y][x] = 0;
       }
     }
     // Make up a pattern for grid
     dx = 0;
-    for (var y = depthOfWater; y < world.height; y++) {
+    for (var y = ms.depthOfWater; y < world.height; y++) {
       blanky = y % 3;
       if (!blanky) {
         dx += 1;
@@ -402,7 +402,7 @@ function example_barrier() {
         return this.lighted ? 2 : 3;
       },
       process: function (neighbors) {
-        //this.lighted = neighbors[world.TOP.index] && !(neighbors[world.TOP.index].inhibitor === inhibitorDensity) && !neighbors[world.TOP.index].isSolid
+        //this.lighted = neighbors[world.TOP.index] && !(neighbors[world.TOP.index].inhibitor === sp.inhibitorDensity) && !neighbors[world.TOP.index].isSolid
         //&& neighbors[world.BOTTOM.index] && neighbors[world.BOTTOM.index].isSolid;
       },
     });
@@ -433,13 +433,13 @@ function example_barrier() {
   
     world.palette = [];
     world.palette.push("109, 170, 44, 1");
-    for (var i = 1; i <= inhibitorDensity; i++) {
-      world.palette.push("89, 125, 206, " + (i + 5) / (inhibitorDensity + 5));
+    for (var i = 1; i <= sp.inhibitorDensity; i++) {
+      world.palette.push("89, 125, 206, " + (i + 5) / (sp.inhibitorDensity + 5));
     }
     world.palette.push("68, 36, 52, 1");
     world.palette.push("68, 36, 52, 1");
   
-    world.depthOfWater = depthOfWater;
+    world.ms.depthOfWater = ms.depthOfWater;
     world.inhibitorTotal = inhibitorTotal;
     world.inhibitorAccessible = inhibitorAccessible;
     world.binderTotal = binderTotal;
@@ -470,7 +470,7 @@ function example_barrier() {
                 neighbors[d[i]] !== null &&
                 this.inhibitor &&
                 neighbors[d[i]].cellType === "polymer" &&
-                neighbors[d[i]].inhibitor < inhibitorSolubility
+                neighbors[d[i]].inhibitor < sp.inhibitorSolubility
               ) {
                 if (Math.random() < 10.2) {
                   var amt = Math.min(
@@ -508,7 +508,7 @@ function example_barrier() {
               if (
                 neighbors[d[i]] !== null &&
                 neighbors[d[i]].cellType === "polymer" &&
-                neighbors[d[i]].inhibitor < inhibitorSolubility &&
+                neighbors[d[i]].inhibitor < sp.inhibitorSolubility &&
                 this.inhibitor > 0
               ) {
                 if (Math.random() < 10.2) {
@@ -535,19 +535,19 @@ function example_barrier() {
       },
       function () {
         //init
-        this.inhibitor = inhibitorDensity;
+        this.inhibitor = sp.inhibitorDensity;
       }
     );
   
     world.registerCellType("inhibitor", {
       isSolid: true,
       getColor: function () {
-        return this.lighted ? inhibitorDensity + 1 : inhibitorDensity + 2;
+        return this.lighted ? sp.inhibitorDensity + 1 : sp.inhibitorDensity + 2;
       },
       process: function (neighbors) {
         this.lighted =
           neighbors[world.TOP.index] &&
-          !(neighbors[world.TOP.index].inhibitor === inhibitorDensity) &&
+          !(neighbors[world.TOP.index].inhibitor === sp.inhibitorDensity) &&
           !neighbors[world.TOP.index].isSolid &&
           neighbors[world.BOTTOM.index] &&
           neighbors[world.BOTTOM.index].isSolid;
@@ -576,19 +576,19 @@ function example_barrier() {
       cellSize: 6,
     });
   
-    depthOfWater = 20;
+    ms.depthOfWater = 20;
     inhibitorTotal = 0;
     binderTotal = 0;
-    //	inhibitorSolubility = 1;
-    //	inhibitorDensity = 9;
-    inhibitorDensity = parseInt($("#inhibitordensity").val(), 10);
-    inhibitorSolubility = parseInt($("#inhibitorsolubility").val(), 10);
-    if (inhibitorSolubility > inhibitorDensity) {
-      inhibitorSolubility = inhibitorDensity;
+    //	sp.inhibitorSolubility = 1;
+    //	sp.inhibitorDensity = 9;
+    sp.inhibitorDensity = parseInt($("#inhibitordensity").val(), 10);
+    sp.inhibitorSolubility = parseInt($("#inhibitorsolubility").val(), 10);
+    if (sp.inhibitorSolubility > sp.inhibitorDensity) {
+      sp.inhibitorSolubility = sp.inhibitorDensity;
     }
     var genPVC = -1.0;
-  //  minimumPVC = parseFloat($("#minimumpvc").val());
-  //  maximumPVC = parseFloat($("#maximumpvc").val());
+  //  ms.minimumPVC = parseFloat($("#minimumpvc").val());
+  //  ms.maximumPVC = parseFloat($("#maximumpvc").val());
     world.registerCellType(
       "binder",
       {
@@ -626,13 +626,13 @@ function example_barrier() {
       );
   
       // fill the cell to depth of water with water
-      for (var y = 0; y < depthOfWater; y++) {
+      for (var y = 0; y < ms.depthOfWater; y++) {
         for (var x = 0; x < world.width; x++) {
           grid[y][x] = 0;
         }
       }
       // fill holes in binder with inhibitor while counting
-      for (var y = depthOfWater; y < world.height; y++) {
+      for (var y = ms.depthOfWater; y < world.height; y++) {
         for (var x = 0; x < world.width; x++) {
           if (grid[y][x] === 0) {
             grid[y][x] = 2;
@@ -644,7 +644,7 @@ function example_barrier() {
       }
       genPVC = inhibitorTotal / (inhibitorTotal + binderTotal);
       //	console.log(genPVC)
-    } while (genPVC < minimumPVC || genPVC > maximumPVC);
+    } while (genPVC < ms.minimumPVC || genPVC > ms.maximumPVC);
   
     //NOW JUST CREATE A NEW COATING TO COUNT ACCESSIBLE INHIBITOR
     world = new CAWorld({
@@ -709,7 +709,7 @@ function example_barrier() {
         return this.lighted ? 2 : 3;
       },
       process: function (neighbors) {
-        //this.lighted = neighbors[world.TOP.index] && !(neighbors[world.TOP.index].inhibitor === inhibitorDensity) && !neighbors[world.TOP.index].isSolid
+        //this.lighted = neighbors[world.TOP.index] && !(neighbors[world.TOP.index].inhibitor === sp.inhibitorDensity) && !neighbors[world.TOP.index].isSolid
         //&& neighbors[world.BOTTOM.index] && neighbors[world.BOTTOM.index].isSolid;
       },
     });
@@ -740,13 +740,13 @@ function example_barrier() {
   
     world.palette = [];
     world.palette.push("89, 125, 206, 1");
-    for (var i = 1; i <= inhibitorDensity; i++) {
-      world.palette.push("189, 125, 206, " + (i + 5) / (inhibitorDensity + 5));
+    for (var i = 1; i <= sp.inhibitorDensity; i++) {
+      world.palette.push("189, 125, 206, " + (i + 5) / (sp.inhibitorDensity + 5));
     }
     world.palette.push("109, 170, 44, 1");
     world.palette.push("68, 36, 52, 1");
   
-    world.depthOfWater = depthOfWater;
+    world.ms.depthOfWater = ms.depthOfWater;
     world.inhibitorTotal = inhibitorTotal;
     world.inhibitorAccessible = inhibitorAccessible;
     world.binderTotal = binderTotal;
@@ -775,7 +775,7 @@ function example_barrier() {
               neighbors[i] !== null &&
               this.inhibitor &&
               neighbors[i].cellType === "water" &&
-              neighbors[i].inhibitor < inhibitorSolubility
+              neighbors[i].inhibitor < sp.inhibitorSolubility
             ) {
               if (Math.random() < 0.2) {
                 var amt = Math.min(this.inhibitor, 9 - neighbors[i].inhibitor);
@@ -807,7 +807,7 @@ function example_barrier() {
             if (
               neighbors[i] !== null &&
               neighbors[i].cellType === "water" &&
-              neighbors[i].inhibitor < inhibitorSolubility
+              neighbors[i].inhibitor < sp.inhibitorSolubility
             ) {
               if (Math.random() < 0.2) {
                 var amt = Math.min(this.inhibitor, 9 - neighbors[i].inhibitor);
@@ -829,19 +829,19 @@ function example_barrier() {
       },
       function () {
         //init
-        this.inhibitor = inhibitorDensity;
+        this.inhibitor = sp.inhibitorDensity;
       }
     );
   
     world.registerCellType("inhibitor", {
       isSolid: true,
       getColor: function () {
-        return this.lighted ? inhibitorDensity + 1 : inhibitorDensity + 2;
+        return this.lighted ? sp.inhibitorDensity + 1 : sp.inhibitorDensity + 2;
       },
       process: function (neighbors) {
         this.lighted =
           neighbors[world.TOP.index] &&
-          !(neighbors[world.TOP.index].inhibitor === inhibitorDensity) &&
+          !(neighbors[world.TOP.index].inhibitor === sp.inhibitorDensity) &&
           !neighbors[world.TOP.index].isSolid &&
           neighbors[world.BOTTOM.index] &&
           neighbors[world.BOTTOM.index].isSolid;
@@ -885,17 +885,17 @@ function example_barrier() {
       cellSize: 6,
     });
   
-    depthOfWater = 20;
+    ms.depthOfWater = 20;
     inhibitorTotal = 0;
     binderTotal = 0;
-  //srg  inhibitorDensity = parseInt($("#inhibitordensity").val(), 10);
-  //srg  inhibitorSolubility = parseInt($("#inhibitorsolubility").val(), 10);
-    if (inhibitorSolubility > inhibitorDensity) {
-      inhibitorSolubility = inhibitorDensity;
+  //srg  sp.inhibitorDensity = parseInt($("#inhibitordensity").val(), 10);
+  //srg  sp.inhibitorSolubility = parseInt($("#inhibitorsolubility").val(), 10);
+    if (sp.inhibitorSolubility > sp.inhibitorDensity) {
+      sp.inhibitorSolubility = sp.inhibitorDensity;
     }
     var genPVC = -1.0;
-  //srg  minimumPVC = parseFloat($("#minimumpvc").val());
-  //srg  maximumPVC = parseFloat($("#maximumpvc").val());
+  //srg  ms.minimumPVC = parseFloat($("#minimumpvc").val());
+  //srg  ms.maximumPVC = parseFloat($("#maximumpvc").val());
     world.registerCellType(
       "binder",
       {
@@ -934,13 +934,13 @@ function example_barrier() {
       );
   
       // fill the cell to depth of water with water
-      for (var y = 0; y < depthOfWater; y++) {
+      for (var y = 0; y < ms.depthOfWater; y++) {
         for (var x = 0; x < world.width; x++) {
           grid[y][x] = 0;
         }
       }
       // fill holes in binder with inhibitor while counting
-      for (var y = depthOfWater; y < world.height; y++) {
+      for (var y = ms.depthOfWater; y < world.height; y++) {
         for (var x = 0; x < world.width; x++) {
           if (grid[y][x] === 0) {
             grid[y][x] = 2;
@@ -952,7 +952,7 @@ function example_barrier() {
       }
       genPVC = inhibitorTotal / (inhibitorTotal + binderTotal);
       //	console.log(genPVC)
-    } while (genPVC < minimumPVC || genPVC > maximumPVC);
+    } while (genPVC < ms.minimumPVC || genPVC > ms.maximumPVC);
   
     //NOW JUST CREATE A NEW COATING TO COUNT ACCESSIBLE INHIBITOR
     world = new CAWorld({
@@ -1017,7 +1017,7 @@ function example_barrier() {
         return this.lighted ? 2 : 3;
       },
       process: function (neighbors) {
-        //this.lighted = neighbors[world.TOP.index] && !(neighbors[world.TOP.index].inhibitor === inhibitorDensity) && !neighbors[world.TOP.index].isSolid
+        //this.lighted = neighbors[world.TOP.index] && !(neighbors[world.TOP.index].inhibitor === sp.inhibitorDensity) && !neighbors[world.TOP.index].isSolid
         //&& neighbors[world.BOTTOM.index] && neighbors[world.BOTTOM.index].isSolid;
       },
     });
@@ -1048,13 +1048,13 @@ function example_barrier() {
   
     world.palette = [];
     world.palette.push("89, 125, 206, 1");
-    for (var i = 1; i <= inhibitorDensity; i++) {
-      world.palette.push("189, 125, 206, " + (i + 5) / (inhibitorDensity + 5));
+    for (var i = 1; i <= sp.inhibitorDensity; i++) {
+      world.palette.push("189, 125, 206, " + (i + 5) / (sp.inhibitorDensity + 5));
     }
     world.palette.push("109, 170, 44, 1");
     world.palette.push("68, 36, 52, 1");
   
-    world.depthOfWater = depthOfWater;
+    world.ms.depthOfWater = ms.depthOfWater;
     world.inhibitorTotal = inhibitorTotal;
     world.inhibitorAccessible = inhibitorAccessible;
     world.binderTotal = binderTotal;

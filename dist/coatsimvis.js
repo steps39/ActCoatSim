@@ -7,18 +7,19 @@ leachProgress.push([0, 0]);
 var multipleLeaches = [];
 var currentLabel;
 var series = 0;
-var firstTime, g_endFraction;
+var firstTime;
 var g_running = true;
-var g_globalPlots = false;
 var maxFrames, maxLeached;
-var g_topwater, g_topcoat, g_scribed, g_topLeak, g_leftLeak, g_rightLeak, g_bottomLeak, g_manualInter, g_diffusionTest, g_gridFromCA, g_xSqrt;
-var g_quickFinish, g_allFinish, g_allClosed, g_saveGrids, g_saveGraphs, g_captureAnimation, g_capturePlot;
-var inhibitorSolubility, inhibitorDensity, maximumParticle, minimumParticle, radius, maximumPVC, minimumPVC, coatingNo, inhibitorAccessible, inhibitorTotal;
+var ms = {noSamples:5, manualInter:false, topWater:true, depthOfWater:10, topcoat:false, depthOfTopcoat:10, scribed:false, sizeOfScribe:10, diffusionTest:false,
+          gridFromCA:false, noStrucSteps:15, radius:10, noOfParticles:20, noOfCuts:4, minimumParticle:3, maximumParticle:10, minimumPVC:0.1, maximumPVC:1.0};
+var sp = {inhibitorDensity:1, inhibitorSolubility:1, probDiffuse:1.0, probDissolve:1.0, topLeak:true, leftLeak:false, rightLeak:false, bottomLeak:false};
+var ac = {globalPlots:false, xSqrt:true, saveGrids:false, saveGraphs:false, captureAnimation:false, capturePlot:false, stepFrames:3, plotFrames:10, endFraction:0.5, noVisualUpdates:false};
+var g_quickFinish, g_allFinish, g_allClosed, rcoatingNo, inhibitorAccessible, inhibitorTotal;
 var g_grid;
 var loopFinished = false;
 var allStuff = [];
 var firstTime = true;
-var myCanvas, myPlot, ctx, renderer, stage, meter, textures, pixels, noSamples, pixiVersion, fileNameStem;
+var myCanvas, myPlot, ctx, renderer, stage, meter, textures, pixels, pixiVersion, fileNameStem;
 var gridCapturer = null;
 var plotCapturer = null;
 var plotPlot;
@@ -39,7 +40,7 @@ let ccOptions = {
 function startRecording(fileNameStem,coatingNo) {
   var lcapturer;
   lcapturer = new CCapture({
-    name: fileNameStem + (coatingNo + 1),
+    name: generateFileNameVideo(generateFileNameSim(fileNameStem) + "CN" + (zeroNumber(coatingNo + 1,2))),
     verbose: false,
     display: false,
     framerate: parseInt(ccOptions.framerate),
@@ -60,10 +61,20 @@ function stopRecording(lcapturer){
   lcapturer.save();
 }
 
-function zeroNumber(item) {
+/*function zeroNumber(item) {
   let sitem = item.toString();
   if (item < 10) {
     sitem = "0" + sitem;
+  }
+  return sitem;
+}*/
+
+function zeroNumber(item, noDigits) {
+  let sitem = item.toString();
+  for (let i=noDigits; i--;i>1){
+    if (item < Math.pow(10,i)) {
+      sitem = "0" + sitem;
+    }
   }
   return sitem;
 }
@@ -71,32 +82,69 @@ function zeroNumber(item) {
 function generateFileNameStem() {
   let d = new Date();
   let name =
-  zeroNumber(d.getFullYear() % 100) +
-  zeroNumber(d.getMonth() + 1) +
-  zeroNumber(d.getDate()) +
-  zeroNumber(d.getHours()) +
-  zeroNumber(d.getMinutes()) +
-  "ID" + Math.round(inhibitorDensity) +
-  "IS" + Math.round(inhibitorSolubility) +
-  "R" + Math.round(radius);
-  if (g_diffusionTest) {
+  zeroNumber(d.getFullYear() % 100,2) +
+  zeroNumber(d.getMonth() + 1,2) +
+  zeroNumber(d.getDate(),2) +
+  zeroNumber(d.getHours(),2) +
+  zeroNumber(d.getMinutes(),2);
+  "R" + zeroNumber(Math.round(ms.radius),2);
+  if (ms.diffusionTest) {
     name += "DT";
   } else {
-    if (g_gridFromCA) {
+    if (ms.gridFromCA) {
       name += "CA";
     } else {
       name += "PP";
     }
-    if (g_manualInter) {
+    if (ms.topcoat) {
+      name += "T" + ms.depthOfTopcoat;
+    }
+    if (ms.topWater) {
+      name += "W" + ms.depthOfWater;
+    }
+    if (ms.scribed) {
+      name += "S" + ms.sizeOfScribe;
+    }
+    if (ms.manualInter) {
       name += "M";
-      name +=
-        "grid" +
-        "PS" +
-        Math.round(100 * minimumPVC) +
-        "PL" +
-        Math.round(100 * maximumPVC);
+    }
+    if (!ms.gridFromCA) {
+      name += "R" + Math.round(ms.radius) + "N" + ms.noOfCuts;
     }
   }
+  return name;
+}
+
+function generateFileNameSim(name) {
+  if (ms.diffusionTest) {
+    return name;
+  } else {
+    name +=
+      "ID" + zeroNumber(Math.round(sp.inhibitorDensity),2) +
+      "IS" + zeroNumber(Math.round(sp.inhibitorSolubility),2) +
+      "PS" + zeroNumber(Math.round(sp.probDissolve*1000),3) +
+      "PD" + zeroNumber(Math.round(sp.probDiffuse*1000),3);
+  }
+  if (sp.topLeak) {
+    name += "LT";
+  }
+  if (sp.leftLeak) {
+    name += "LL";
+  }
+  if (sp.bottomLeak) {
+    name += "LB";
+  }
+  if (sp.rightLeak) {
+    name += "LR";
+  }
+  name += "TF" + zeroNumber(Math.round(100 * ac.endFraction),2);
+  return name;
+}
+
+function generateFileNameVideo(name) {
+  name +=
+      "PVC" + zeroNumber(Math.round(100 * world.inhibitorTotal / world.coatingDry),2) +
+      "AC" + zeroNumber(Math.round(100 * world.inhibitorAccessible / world.inhibitorTotal),2);
   return name;
 }
 
@@ -113,41 +161,41 @@ function changeCheck(htmlObject) {
 }
 
 function updateFromPage() {
-  noSamples = changeInt("#nocoatings");
-  g_stepFrames = changeInt("#numFrames");
-  g_plotFrames = changeInt("#numPlots");
-  depthOfWater = changeInt("#depthofwater");
-  depthOfTopcoat = changeInt("#depthoftopcoat");
-  sizeOfScribe = changeInt("#sizeofscribe");
-  inhibitorDensity = changeInt("#inhibitordensity");
-  inhibitorSolubility = changeInt("#inhibitorsolubility");
-  probDiffusion = changeFloat("#probdiff");
-  probSolubility = changeFloat("#probsol");
-  g_topwater = changeCheck("#waterontop");
-  g_topcoat = changeCheck("#topcoated");
-  g_diffusionTest = changeCheck("#diffusiontest");
-  g_gridFromCA = changeCheck("#gridfromca");
-  g_manualInter = changeCheck("#manualinter");
-  g_scribed = changeCheck("#scribed");
-  noStrucSteps = changeInt("#nostrucsteps");
-  g_endFraction = changeFloat("#endfraction");
-  minimumPVC = changeFloat("#minimumpvc");
-  maximumPVC = changeFloat("#maximumpvc");
-  radius = changeInt("#radius");
-  minimumParticle = changeInt("#minparticle");
-  maximumParticle = changeInt("#maxparticle");
-  g_stepFrames = parseInt($("#numFrames").val(), 10);
-  g_noUpdates = changeCheck("#noupdates");
-  g_globalPlots = changeCheck("#plotCheckbox");
-  g_xSqrt = changeCheck("#xsqrt");
-  g_topLeak = changeCheck("#topleak");
-  g_leftLeak = changeCheck("#leftleak");
-  g_rightLeak = changeCheck("#rightleak");
-  g_bottomLeak = changeCheck("#bottomleak");
-  g_saveGrids = changeCheck("#savegrids");
-  g_saveGraphs = changeCheck("#savegraphs");
-  g_captureAnimation = changeCheck("#captureanimation");
-  g_capturePlot = changeCheck("#captureplot");
+  ms.noSamples = changeInt("#nocoatings");
+  ac.stepFrames = changeInt("#numFrames");
+  ac.plotFrames = changeInt("#numPlots");
+  ms.depthOfWater = changeInt("#depthofwater");
+  ms.depthOfTopcoat = changeInt("#depthoftopcoat");
+  ms.sizeOfScribe = changeInt("#sizeofscribe");
+  sp.inhibitorDensity = changeInt("#inhibitordensity");
+  sp.inhibitorSolubility = changeInt("#inhibitorsolubility");
+  sp.probDiffuse = changeFloat("#probdiff");
+  sp.probDissolve = changeFloat("#probsol");
+  ms.topWater = changeCheck("#waterontop");
+  ms.topcoat = changeCheck("#topcoated");
+  ms.diffusionTest = changeCheck("#diffusiontest");
+  ms.gridFromCA = changeCheck("#gridfromca");
+  ms.manualInter = changeCheck("#manualinter");
+  ms.scribed = changeCheck("#scribed");
+  ms.noStrucSteps = changeInt("#nostrucsteps");
+  ac.endFraction = changeFloat("#endfraction");
+  ms.minimumPVC = changeFloat("#minimumpvc");
+  ms.maximumPVC = changeFloat("#maximumpvc");
+  ms.radius = changeInt("#radius");
+  ms.minimumParticle = changeInt("#minparticle");
+  ms.maximumParticle = changeInt("#maxparticle");
+  ac.stepFrames = parseInt($("#numFrames").val(), 10);
+  ac.noVisualUpdates = changeCheck("#noupdates");
+  ac.globalPlots = changeCheck("#plotCheckbox");
+  ac.xSqrt = changeCheck("#xsqrt");
+  sp.topLeak = changeCheck("#topleak");
+  sp.leftLeak = changeCheck("#leftleak");
+  sp.rightLeak = changeCheck("#rightleak");
+  sp.bottomLeak = changeCheck("#bottomleak");
+  ac.saveGrids = changeCheck("#savegrids");
+  ac.saveGraphs = changeCheck("#savegraphs");
+  ac.captureAnimation = changeCheck("#captureanimation");
+  ac.capturePlot = changeCheck("#captureplot");
 }
 
 window.onload = function () {
@@ -190,22 +238,22 @@ window.onload = function () {
   });
 
   $("#endfraction").on("change", function (evt) {
-    g_endFraction = changeFloat("#endfraction");
+    ac.endFraction = changeFloat("#endfraction");
   });
   $("#numFrames").on("change", function (evt) {
-    g_stepFrames = changeInt("#numFrames");
+    ac.stepFrames = changeInt("#numFrames");
   });
   $("#numPlots").on("change", function (evt) {
-    g_plotFrames = changeInt("#numPlots");
+    ac.plotFrames = changeInt("#numPlots");
   });
   $("#noupdates").on("change", function (evt) {
-    g_noUpdates = changeCheck("#noupdates");
+    ac.noVisualUpdates = changeCheck("#noupdates");
   });
   $("#plotCheckbox").on("change", function (evt) {
-    g_globalPlots = changeCheck("#plotCheckbox");
+    ac.globalPlots = changeCheck("#plotCheckbox");
   });
   $("#xsqrt").on("change", function (evt) {
-    g_xSqrt = changeCheck("#xsqrt");
+    ac.xSqrt = changeCheck("#xsqrt");
   });
   updateFromPage();
   // loadExample("leaching");
@@ -217,14 +265,8 @@ console.log("setting up Animation");
   myCanvas = document.getElementById("myCanvas");
   myCanvas.width = world.cellSize * world.width;
   myCanvas.height = world.cellSize * world.height;
-  if (g_captureAnimation) {
-    if (g_diffusionTest) {
-      gridCapturer = startRecording(fileNameStem + "PVC" + Math.round(100*world.inhibitorTotal / world.coatingDry) +
-                     "IA" + Math.round(100*world.inhibitorAccessible / world.inhibitorTotal) + "T",coatingNo);
-    } else {
-      gridCapturer = startRecording(fileNameStem + "PVC" + Math.round(100*world.inhibitorTotal / world.coatingDry) +
-                    "IA" + Math.round(100*world.inhibitorAccessible / world.inhibitorTotal) + "C",coatingNo);
-    }
+  if (ac.captureAnimation) {
+    gridCapturer = startRecording(fileNameStem,coatingNo);
   }
   if (pixiVersion > 4) {
     renderer = new PIXI.Application({
@@ -329,19 +371,19 @@ function loop() {
       leachProgress = [];
       leachProgress.push([0, 0]);
       world.leached = 0;
-      world.inhibitorTotal *= inhibitorDensity;
-      world.inhibitorAccessible *= inhibitorDensity;
+      world.inhibitorTotal *= sp.inhibitorDensity;
+      world.inhibitorAccessible *= sp.inhibitorDensity;
       world.coatingDry =
-        (world.height - world.depthOfWater) * world.width * inhibitorDensity;
+        (world.height - world.depthOfWater) * world.width * sp.inhibitorDensity;
       currentLabel =
         "Inhibitor PVC: " +
         (world.inhibitorTotal / world.coatingDry).toPrecision(2) +
         "     Accessible: " +
         (world.inhibitorAccessible / world.inhibitorTotal).toPrecision(2) +
         "     Density: " +
-        inhibitorDensity +
+        sp.inhibitorDensity +
         "    Solubility: " +
-        inhibitorSolubility;
+        sp.inhibitorSolubility;
       console.log(currentLabel);
 
       setupAnimation();
@@ -361,7 +403,7 @@ function loop() {
 //console.log("into loop - again");
     // Draw before anything happens
     if (frames == 0) {
-      if (g_captureAnimation) {
+      if (ac.captureAnimation) {
 console.log("filling the holes");
         updateGrid(pixels, world, textures);
         stage.addChild(frameText);
@@ -373,12 +415,12 @@ console.log("filled the holes");
     world.step();
     leachProgress.push([frames, world.leached / world.coatingDry]);
      // limit speed of simulation
-    if (frames % g_stepFrames === 0) {
+    if (frames % ac.stepFrames === 0) {
       //        console.log("here we are running");
       /*            world.step();
             leachProgress.push([frames,world.leached/world.inhibitorTotal]);*/
       $("#currentstep").text(frames);
-      if (!g_noUpdates) {
+      if (!ac.noVisualUpdates) {
 
         updateGrid(pixels, world, textures);
         frameText.text = "#: " + frames;
@@ -388,7 +430,7 @@ console.log("filled the holes");
         //        capturer.capture(renderer.view);
         //        renderer.render(stage);
       }
-      if (frames % g_plotFrames === 0) {
+      if (frames % ac.plotFrames === 0) {
         var xmax,
           ymax,
           y = world.leached / world.coatingDry;
@@ -398,14 +440,14 @@ console.log("filled the holes");
         if (y > maxLeached) {
           maxLeached = y;
         }
-        if (g_globalPlots) {
+        if (ac.globalPlots) {
           xmax = maxFrames;
           ymax = maxLeached;
         } else {
           xmax = frames;
           ymax = y;
         }
-        if (!g_noUpdates) {
+        if (!ac.noVisualUpdates) {
           var options = {
             canvas: true,
             grid: {
@@ -418,7 +460,7 @@ console.log("filled the holes");
               max: xmax,
               axisLabel: "Time Steps",
               transform: function (v) {
-                if (g_xSqrt) {
+                if (ac.xSqrt) {
                   var x = Math.sqrt(v);
                 } else {
                   var x = v;
@@ -426,7 +468,7 @@ console.log("filled the holes");
                 return x;
               },
               inverseTransform: function (v) {
-                if (g_xSqrt) {
+                if (ac.xSqrt) {
                   var x = v * v;
                 } else {
                   var x = v;
@@ -467,11 +509,11 @@ console.log("filled the holes");
     frames++;
 //    g_allFinish = changeCheck("#allfinish");
     if (
-      (world.leached < g_endFraction * world.inhibitorAccessible) &&
+      (world.leached < ac.endFraction * world.inhibitorAccessible) &&
       !g_quickFinish && !g_allFinish
     ) {
       requestAnimationFrame(loop);
-      if (g_captureAnimation) {
+      if (ac.captureAnimation) {
 //console.log("rending");
         renderer.render(stage);
         gridCapturer.capture(renderer.view);
@@ -483,7 +525,7 @@ console.log("filled the holes");
       g_quickFinish = false;
       firstTime = true;
       requestAnimationFrame(loop);
-      if (g_captureAnimation) {
+      if (ac.captureAnimation) {
 console.log("stopping rending");
         renderer.render(stage);
         gridCapturer.capture(renderer.view);
@@ -492,21 +534,19 @@ console.log("stopped rending");
       }
 //      plotCapturer.capture(myPlot);
 //      stopRecording(plotCapturer);
-      if ((noSamples == (coatingNo + 1)) || g_allFinish) {
+      if ((ms.noSamples == (coatingNo + 1)) || g_allFinish) {
         g_allClosed = true;
-        if (g_capturePlot) {
-          if (g_diffusionTest) {
-            graphPicture('#Graph',(fileNameStem + "PVC" + Math.round(100*world.inhibitorTotal / world.coatingDry) +
-                          "IA" + Math.round(100*world.inhibitorAccessible / world.inhibitorTotal) + "XYG"),coatingNo);
-            graphPicture('#Legend',(fileNameStem + "PVC" + Math.round(100*world.inhibitorTotal / world.coatingDry) +
-                          "IA" + Math.round(100*world.inhibitorAccessible / world.inhibitorTotal) + "XYL"),coatingNo);
+        if (ac.capturePlot) {
+          if (ms.diffusionTest) {
+            graphPicture('#Graph',(fileNameStem + "XYG"),coatingNo);
+            graphPicture('#Legend',(fileNameStem + "XYL"),coatingNo);
 
           } else {
             graphPicture('#Graph',(fileNameStem+'XYG'),coatingNo);
             graphPicture('#Legend',(fileNameStem+'XYL'),coatingNo);
           }
         }
-        if(g_saveGraphs) {
+        if(ac.saveGraphs) {
           saveCurrentData();
         }
       }
@@ -515,24 +555,24 @@ console.log("stopped rending");
 };
 
 function coatingBit(stuff) {
-  for (let i = 0; i < noSamples; i++) {
+  for (let i = 0; i < ms.noSamples; i++) {
     console.log("About to make coating " + (i + 1));
     makeCoating();
     countAccessible();
     var record = [];
     record.push(grid);
     record.push(particleID);
-    coatingDry = world.height - depthOfWater;
-    if (!g_scribed) {
+    coatingDry = world.height - ms.depthOfWater;
+    if (!ms.scribed) {
       coatingDry *= world.width;
     } else {
-      coatingDry *= world.width - sizeOfScribe;
+      coatingDry *= world.width - ms.sizeOfScribe;
     };
     record.push([
-      minimumPVC,
-      maximumPVC,
-      minimumParticle,
-      maximumParticle,
+      ms.minimumPVC,
+      ms.maximumPVC,
+      ms.minimumParticle,
+      ms.maximumParticle,
       coatingDry,
       binderTotal,
       inhibitorTotal,
@@ -546,7 +586,7 @@ function coatingBit(stuff) {
         (inhibitorAccessible / inhibitorTotal).toPrecision(2)
     );
   };
-  if(g_saveGrids){
+  if(ac.saveGrids){
     saveGrids();
   }
 };
@@ -559,7 +599,11 @@ function wrappedLoop() {
 }
 
 function saveGrids() {
-  ret = JSON.stringify(allStuff);
+  var saveStuff = {
+    ms: ms, allStuff: allStuff
+  }
+//  ret = JSON.stringify(allStuff);
+  ret = JSON.stringify(saveStuff);
   var BB = new Blob([ret], { type: "text/plain;charset=UTF-8" });
 //saving
   saveAs(BB, fileNameStem + ".txt");
@@ -581,11 +625,11 @@ function loadGrids(allStuff) {
 }
 
 function changeStepFrames() {
-  g_stepFrames = parseInt($("#numFrames").val(), 10);
+  ac.stepFrames = parseInt($("#numFrames").val(), 10);
 }
 
 function changePlotFrames() {
-  g_plotFrames = parseInt($("#numPlots").val(), 10);
+  ac.plotFrames = parseInt($("#numPlots").val(), 10);
 }
 
 function changeRunningState() {
@@ -608,7 +652,7 @@ function saveCurrentData() {
   }
   var BB = new Blob([ret], { type: "text/plain;charset=UTF-8" });
 //saving
-  saveAs(BB, fileNameStem + "GD" + ".txt");
+  saveAs(BB, generateFileNameSim(fileNameStem) + "GD" + ".txt");
   //	multipleLeaches = JSON.parse(ret);
   //	multipleLeaches = JSON.parse(BB.slice(contentType="text/plain;charset=UTF8"));
 }
@@ -617,7 +661,7 @@ function graphPicture(element,fileNameBit,coatNo) {
   var ccanvas;
   html2canvas(document.querySelector(element)).then(function(ccanvas) {
     console.log(ccanvas);
-    fileNameBit = fileNameBit + (coatNo + 1) + '.png';
+    fileNameBit = generateFileNameSim(fileNameBit) + '.png';
     saveAs(ccanvas.toDataURL(), fileNameBit);
   });
 }
@@ -626,10 +670,10 @@ function loadExample(example) {
   updateFromPage();
   allStuff = [];
   fileNameStem = generateFileNameStem();
-  if (!g_diffusionTest) {
+  if (!ms.diffusionTest) {
     coatingBit();
   } else {
-    gridTest(64,96,radius);
+    gridTest(64,96,ms.radius);
   }
 //  graphPicture('#Graph',(fileNameStem+'XYG'),coatingNo);
 //  graphPicture('#Legend',(fileNameStem+'XYL'),coatingNo);
@@ -649,6 +693,7 @@ function reloadExample(example) {
   firstTime = true;
   leachProgress = [];
   coatingNo = -1;
+//  fileNameStem = generateFileNameStem();
 //  $("#allfinish").prop("checked", false);
   g_allFinish = false;
   g_allClosed = false;

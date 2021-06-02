@@ -36,7 +36,7 @@ var grids;
 var particleID;
 var particleIDs;
 
-function createParticle(noOfCuts,particle){
+function createParticle(radius,noOfCuts,particle){
 //console.log("create particle ",particle);
   if (noOfCuts) {
     do {
@@ -217,9 +217,9 @@ function countCells(particle,radius){
   return count;
 }
 
-function insertParticles(disc){
+function insertParticles(disc,radius){
 //			Create particles
-  for (var l = 0; l < noOfParticles; l++) {
+  for (var l = 0; l < ms.noOfParticles; l++) {
     var particle = deepCopy(disc);
     touching = 1;
     attempts = 0;
@@ -227,7 +227,7 @@ function insertParticles(disc){
     for (; touching != 0 && attempts < 1; ) {
       attempts += 1;
       particleInhibitor = discInhibitor;
-      particle = createParticle(noOfCuts,particle);
+      particle = createParticle(radius,ms.noOfCuts,particle);
       var placingTry = 0;
       do {
         //Test for overlap of the particle inside the grid
@@ -317,18 +317,18 @@ function makeCoating() {
   inhibitorTotal = 0;
   binderTotal = 0;
   topOfPrimer = 0;
-  if (g_topcoat) {
-    topOfPrimer += depthOfTopcoat;
+  if (ms.topcoat) {
+    topOfPrimer += ms.depthOfTopcoat;
   } else {
-    //depthOfTopcoat = 0;
+    //ms.depthOfTopcoat = 0;
   }
-  if (g_topwater) {
-    topOfPrimer += depthOfWater;
+  if (ms.topWater) {
+    topOfPrimer += ms.depthOfWater;
   } else {
-    //depthOfWater = 0;
+    //ms.depthOfWater = 0;
   }
-  if (inhibitorSolubility > inhibitorDensity) {
-    inhibitorSolubility = inhibitorDensity;
+  if (sp.inhibitorSolubility > sp.inhibitorDensity) {
+    sp.inhibitorSolubility = sp.inhibitorDensity;
   }
   var genPVC = -1.0;
 
@@ -350,8 +350,8 @@ function makeCoating() {
     {
       getColor: function () {
         //return '89, 125, 206, ' + (this.inhibitor ? Math.max(0.3, this.inhibitor/9) : 0);
-        if (this.inhibitor == inhibitorDensity) {
-          return (this.particleID % noParticleColours) + inhibitorDensity + 3;
+        if (this.inhibitor == sp.inhibitorDensity) {
+          return (this.particleID % noParticleColours) + sp.inhibitorDensity + 3;
         } else {
           return this.inhibitor;
         }
@@ -359,9 +359,9 @@ function makeCoating() {
     },
     function () {
       //init
-      this.inhibitor = inhibitorDensity;
+      this.inhibitor = sp.inhibitorDensity;
       //			console.log(this.x,this.y);
-      if (!g_gridFromCA && !g_diffusionTest) {
+      if (!ms.gridFromCA && !ms.diffusionTest) {
         //          console.log("partilce");
         this.particleID = particleID[this.y][this.x];
       } else {
@@ -373,7 +373,7 @@ function makeCoating() {
 /*  world.registerCellType("polymer", {
     isSolid: true,
     getColor: function () {
-      return this.lighted ? inhibitorDensity + 1 : inhibitorDensity + 2;
+      return this.lighted ? sp.inhibitorDensity + 1 : sp.inhibitorDensity + 2;
     },
   });
 */
@@ -381,7 +381,7 @@ function makeCoating() {
     "binder",
     {
       getColor: function () {
-        return this.lighted ? inhibitorDensity + 1 : inhibitorDensity + 2;
+        return this.lighted ? sp.inhibitorDensity + 1 : sp.inhibitorDensity + 2;
       },
       process: function (neighbors) {
         var surrounding = this.countSurroundingCellsWithValue(
@@ -397,7 +397,7 @@ function makeCoating() {
     },
     function () {
       //init
-      if (g_gridFromCA) {
+      if (ms.gridFromCA) {
         this.open = Math.random() > 0.45;
       } else {
         this.open = false;
@@ -417,10 +417,10 @@ function makeCoating() {
       { name: "water", distribution: 0 },
     ]);
     //Cellular automaton coating generation
-    if (g_gridFromCA) {
+    if (ms.gridFromCA) {
       particleID = null;
       // generate our coating, 10 steps ought to do it
-      for (var i = 0; i < noStrucSteps; i++) {
+      for (var i = 0; i < ms.noStrucSteps; i++) {
         world.step();
       }
     }
@@ -437,16 +437,16 @@ function makeCoating() {
     }
 
     //Particle placing coating generation
-    if (!g_gridFromCA) {
-      radius = parseInt($("#radius").val(), 10);
-      disc = makeDisc(radius);
-      noOfParticles = parseInt($("#noofparticles").val(), 10);
-      noOfCuts = parseInt($("#noofcuts").val(), 10);
-      insertParticles(disc);
+    if (!ms.gridFromCA) {
+      ms.radius = parseInt($("#radius").val(), 10);
+      disc = makeDisc(ms.radius);
+      ms.noOfParticles = parseInt($("#noofparticles").val(), 10);
+      ms.noOfCuts = parseInt($("#noofcuts").val(), 10);
+      insertParticles(disc,ms.radius);
     }
     // fill holes in binder with inhibitor while counting
-    if (g_scribed) {
-      primerStart = sizeOfScribe;
+    if (ms.scribed) {
+      primerStart = ms.sizeOfScribe;
     } else {
       primerStart = 0;
     }
@@ -465,32 +465,32 @@ console.log("tries - ",tries,"genPVC - ",genPVC);
     if(tries>10){
       break;
     }
-  } while (!(genPVC > minimumPVC && genPVC < maximumPVC));
-  if (g_topcoat) {
+  } while (!(genPVC > ms.minimumPVC && genPVC < ms.maximumPVC));
+  if (ms.topcoat) {
     // fill the cell with topcoat
-    for (var y = depthOfWater; y < depthOfWater + depthOfTopcoat; y++) {
+    for (var y = ms.depthOfWater; y < ms.depthOfWater + ms.depthOfTopcoat; y++) {
       for (var x = 0; x < world.width; x++) {
         grid[y][x] = 1;
       }
     }
   }
-  if (g_topwater) {
-    for (var y = 0; y < depthOfWater; y++) {
+  if (ms.topWater) {
+    for (var y = 0; y < ms.depthOfWater; y++) {
       for (var x = 0; x < world.width; x++) {
         grid[y][x] = 0;
       }
     }
   }
 
-  if (g_scribed) {
+  if (ms.scribed) {
     // scribe the coating
     for (var y = 0; y < world.height; y++) {
-      for (var x = 0; x < sizeOfScribe; x++) {
+      for (var x = 0; x < ms.sizeOfScribe; x++) {
         grid[y][x] = 0;
       }
     }
   }
-  if (g_manualInter) {
+  if (ms.manualInter) {
     if (g_running) {
       changeRunningState();
     }
@@ -559,7 +559,7 @@ console.log("tries - ",tries,"genPVC - ",genPVC);
         return this.lighted ? 2 : 3;
       },
       process: function (neighbors) {
-        //this.lighted = neighbors[world.TOP.index] && !(neighbors[world.TOP.index].inhibitor === inhibitorDensity) && !neighbors[world.TOP.index].isSolid
+        //this.lighted = neighbors[world.TOP.index] && !(neighbors[world.TOP.index].inhibitor === sp.inhibitorDensity) && !neighbors[world.TOP.index].isSolid
         //&& neighbors[world.BOTTOM.index] && neighbors[world.BOTTOM.index].isSolid;
       },
     });
@@ -589,7 +589,7 @@ function saveGrid(grid) {
 /*	let d = new Date();
 	let name = zeroNumber(d.getFullYear()%100) + zeroNumber(d.getMonth()+1) + zeroNumber(d.getDate()) +
 				 zeroNumber(d.getHours()) + zeroNumber(d.getMinutes());
-	coatingDry = (world.height-depthOfWater)*world.width;
+	coatingDry = (world.height-ms.depthOfWater)*world.width;
 	name += 'grid' + 'P' + Math.round(100*inhibitorTotal/coatingDry) +
 				'A' + Math.round(100*inhibitorAccessible/inhibitorTotal); */
 	ret = JSON.stringify(grid);
@@ -613,19 +613,19 @@ function setWorldPalette() {
     return (color[0] + "," + color[1] + "," + color[2]);
   }
   var rainbow = new Rainbow();
-  if (inhibitorDensity>1) {
-    rainbow.setNumberRange(1, inhibitorDensity);
+  if (sp.inhibitorDensity>1) {
+    rainbow.setNumberRange(1, sp.inhibitorDensity);
   } else {
-    rainbow.setNumberRange(1, inhibitorDensity+1);
+    rainbow.setNumberRange(1, sp.inhibitorDensity+1);
   }
   rainbow.setSpectrum('pink', 'purple');
-  for (var i = 1; i <= inhibitorDensity; i++) {
-    world.palette.push(convertToRGB(rainbow.colourAt(i)) + ((i + 5) / (inhibitorDensity + 5)));
+  for (var i = 1; i <= sp.inhibitorDensity; i++) {
+    world.palette.push(convertToRGB(rainbow.colourAt(i)) + ((i + 5) / (sp.inhibitorDensity + 5)));
 //      world.palette.push(convertToRGB(rainbow.colourAt(i))+",0.5");
   }
 //  Original colour range
-/*    for (var i = 1; i <= inhibitorDensity; i++) {
-    world.palette.push("189, 125, 206, " + (i + 5) / (inhibitorDensity + 5));
+/*    for (var i = 1; i <= sp.inhibitorDensity; i++) {
+    world.palette.push("189, 125, 206, " + (i + 5) / (sp.inhibitorDensity + 5));
   }*/
   // Polymer surface and bulk
   world.palette.push("109, 170, 44, 1");
@@ -673,7 +673,7 @@ world.palette.push('128,0,128,1');
 world.palette.push('0,128,128,1');*/
   // Water
   world.palette.push("0,0,128,1");
-  noParticleColours = world.palette.length - (inhibitorDensity + 4);
+  noParticleColours = world.palette.length - (sp.inhibitorDensity + 4);
 }
 
 function simulation() {
@@ -685,7 +685,7 @@ function simulation() {
       clearRect: true,
     });
     setWorldPalette();
-    world.depthOfWater = depthOfWater;
+    world.depthOfWater = ms.depthOfWater;
     world.inhibitorTotal = inhibitorTotal;
     world.inhibitorAccessible = inhibitorAccessible;
     world.binderTotal = binderTotal;
@@ -702,10 +702,10 @@ function simulation() {
           if (this.inhibitor) {
             //inhibitor can escape on any side if allowed
             if (
-              ((g_topLeak && neighbors[world.TOP.index] === null) ||
-                (g_leftLeak && neighbors[world.LEFT.index] === null) ||
-                (g_rightLeak && neighbors[world.RIGHT.index] === null) ||
-                (g_bottomLeak && neighbors[world.BOTTOM.index] === null)) &&
+              ((sp.topLeak && neighbors[world.TOP.index] === null) ||
+                (sp.leftLeak && neighbors[world.LEFT.index] === null) ||
+                (sp.rightLeak && neighbors[world.RIGHT.index] === null) ||
+                (sp.bottomLeak && neighbors[world.BOTTOM.index] === null)) &&
               Math.random() < 1.02
             ) {
               world.leached += this.inhibitor;
@@ -717,9 +717,9 @@ function simulation() {
               if (
                 neighbors[d[i]] !== null &&
                 neighbors[d[i]].cellType === "water" &&
-                neighbors[d[i]].inhibitor < inhibitorSolubility
+                neighbors[d[i]].inhibitor < sp.inhibitorSolubility
               ) {
-                if (Math.random() <= probDiffusion) {
+                if (Math.random() <= sp.probDiffuse) {
 /*                  var amt = Math.min(
                     this.inhibitor,
                     9 - neighbors[d[i]].inhibitor
@@ -746,8 +746,8 @@ function simulation() {
       {
         getColor: function () {
           //return '89, 125, 206, ' + (this.inhibitor ? Math.max(0.3, this.inhibitor/9) : 0);
-          if (this.inhibitor == inhibitorDensity) {
-            return (this.particleID % noParticleColours) + inhibitorDensity + 3;
+          if (this.inhibitor == sp.inhibitorDensity) {
+            return (this.particleID % noParticleColours) + sp.inhibitorDensity + 3;
           } else {
             return this.inhibitor;
           }
@@ -759,9 +759,9 @@ function simulation() {
               if (
                 neighbors[d[i]] !== null &&
                 neighbors[d[i]].cellType === "water" &&
-                neighbors[d[i]].inhibitor < inhibitorSolubility
+                neighbors[d[i]].inhibitor < sp.inhibitorSolubility
               ) {
-                if (Math.random() <= probSolubility) {
+                if (Math.random() <= sp.probDissolve) {
 //                  var amt = Math.min(
 //                    this.inhibitor,
 //                    9 - neighbors[d[i]].inhibitor
@@ -792,9 +792,9 @@ function simulation() {
       },
       function () {
         //init
-        this.inhibitor = inhibitorDensity;
+        this.inhibitor = sp.inhibitorDensity;
         //			console.log(this.x,this.y);
-        if (!g_gridFromCA && !g_diffusionTest) {
+        if (!ms.gridFromCA && !ms.diffusionTest) {
 //          console.log("partilce");
           this.particleID = particleID[this.y][this.x];
         } else {
@@ -806,18 +806,18 @@ function simulation() {
     world.registerCellType("polymer", {
       isSolid: true,
       getColor: function () {
-        return this.lighted ? inhibitorDensity + 1 : inhibitorDensity + 2;
+        return this.lighted ? sp.inhibitorDensity + 1 : sp.inhibitorDensity + 2;
       },
 /*      process: function (neighbors) {
         this.lighted =
           neighbors[world.TOP.index] &&
-          !(neighbors[world.TOP.index].inhibitor === inhibitorDensity) &&
+          !(neighbors[world.TOP.index].inhibitor === sp.inhibitorDensity) &&
           !neighbors[world.TOP.index].isSolid &&
           neighbors[world.BOTTOM.index] &&
           neighbors[world.BOTTOM.index].isSolid;
       },*/
     });
-    if (!g_diffusionTest) {
+    if (!ms.diffusionTest) {
       // pass in our generated coating data
       world.initializeFromGrid(
         [
@@ -875,25 +875,25 @@ function gridTest(height, width,radius) {
   particleID = null;
   coatingDry = height;
   binderTotal = height * width;
-  minimumPVC = discInhibitor / binderTotal;
-  maximumPVC = minimumPVC;
-  minimumParticle = radius;
-  maximumParticle = radius;
+  ms.minimumPVC = discInhibitor / binderTotal;
+  ms.maximumPVC = ms.minimumPVC;
+  ms.minimumParticle = radius;
+  ms.maximumParticle = radius;
   inhibitorTotal = discInhibitor;
   inhibitorAccessible = discInhibitor;
   record.push(grid);
   record.push(particleID);
   record.push([
-    minimumPVC,
-    maximumPVC,
-    minimumParticle,
-    maximumParticle,
+    ms.minimumPVC,
+    ms.maximumPVC,
+    ms.minimumParticle,
+    ms.maximumParticle,
     coatingDry,
     binderTotal,
     inhibitorTotal,
     inhibitorAccessible,
   ]);
-  for (i=1;i<=noSamples;i++) {
+  for (i=1;i<=ms.noSamples;i++) {
     allStuff.push(record);
   }
 //  g_grid = grid;
@@ -923,8 +923,8 @@ offsety = freeCanvas.getBoundingClientRect().top;*/
     // Make it all polymer
     c.fillStyle = "brown";
     c.fillRect(0, 0, world.width * cellDim, world.height * cellDim);
-    minY = depthOfWater + depthOfTopcoat;
-    minX = sizeOfScribe;
+    minY = ms.depthOfWater + ms.depthOfTopcoat;
+    minX = ms.sizeOfScribe;
 
     for (var row = 0; row <= world.height; row++) {
       //	c.beginPath()
@@ -941,28 +941,28 @@ offsety = freeCanvas.getBoundingClientRect().top;*/
       //c.closePath();
     }
 
-    if (g_topwater) {
+    if (ms.topWater) {
       // fill the cell to depth of water with water
       c.fillStyle = "blue";
-      c.fillRect(0, 0, world.width * cellDim, depthOfWater * cellDim);
+      c.fillRect(0, 0, world.width * cellDim, ms.depthOfWater * cellDim);
     }
 
-    if (g_topcoat) {
+    if (ms.topcoat) {
       // fill the cell with topcoat
       c.fillStyle = "brown";
       c.fillRect(
         0,
-        depthOfWater * cellDim,
+        ms.depthOfWater * cellDim,
         world.width * cellDim,
-        (depthOfWater + depthOfTopcoat) * cellDim,
+        (ms.depthOfWater + ms.depthOfTopcoat) * cellDim,
         cellDim,
         cellDim
       );
     }
 
-    if (g_scribed) {
+    if (ms.scribed) {
       c.fillStyle = "blue";
-      c.fillRect(0, 0, sizeOfScribe * cellDim, world.height * cellDim);
+      c.fillRect(0, 0, ms.sizeOfScribe * cellDim, world.height * cellDim);
     }
     c.fillStyle = "green";
     for (var y = topOfPrimer; y < world.height; y++) {
@@ -1011,7 +1011,7 @@ offsety = freeCanvas.getBoundingClientRect().top;*/
         inhibitorTotal += 1;
         binderTotal -= 1;
         grid[y][x] = 2;
-        particleID[y][x] = noOfParticles + 1;
+        particleID[y][x] = ms.noOfParticles + 1;
       }
     }
   }

@@ -15,16 +15,21 @@
 </head>
 
 <body>
-    <button id="btnPause" class="btn btn-default"><span id="playpause">Pause</span></button>
-    <button id="btnReload" class="btn btn-default">Regenerate</button>
     <button id="btnStart" class="btn btn-default">Full Reset</button>
+    <!--button id="btnPause" class="btn btn-default"><span id="playpause">Pause</span></button-->
+    <button id="btnReload" class="btn btn-default">Resimulate</button>
     Current Step: <span id="currentstep">0</span>
     <button id="btnSaveData" class="btn btn-default">Save Data</button>
     <button id="btnAllFinish" class="btn btn-default">End All Runs</button>
     <button id="btnQuickFinish" class="btn btn-default">End Current Run</button>
-    <div>
+    <!--div>
         <label for="reloaddata" class="btn">Reload Data</label>
         <input id="reloaddata" style="visibility:hidden;" type="file" name="files[]"></input>
+    </div-->
+    <div>
+        <!--button id="reloadgrid" class="btn btn-default">Reload Grids</button-->
+        <label for="reloadgrid" class="btn">Reload Grid</label>
+        <input id="reloadgrid" style="visibility:hidden;" type="file" name="files[]"></input>
     </div>
         <div class="container">
             <div class="jumbotron">
@@ -322,6 +327,31 @@
             
               document.getElementById('reloaddata').addEventListener('change', saveFileSelect, false);*/
 
+            function reloadFileSelectGrid(evt) {
+                var files = evt.target.files; // FileList object
+                var reader = new FileReader();
+
+                // Closure to capture the file information.
+                reader.onload = function () {
+                    text = reader.result;
+                    console.log(reader.result.substring(0, 400));
+                    var loadedStuff = JSON.parse(text);
+                    ms = loadedStuff.ms;
+                    // Need to reload parameters in GUI
+                    allStuff = loadedStuff.allStuff;
+                };
+                console.log('now there');
+                // Read in the image file as a data URL.
+                console.log(files[0]);
+                fileNameStem = files[0].name;
+                fileNameStem = fileNameStem.substring(0,fileNameStem.length - 4);
+                console.log(fileNameStem);
+                reader.readAsText(files[0]);
+            }
+
+            document.getElementById('reloadgrid').addEventListener('change', reloadFileSelectGrid, false);
+
+
             function reloadFileSelect(evt) {
                 var files = evt.target.files; // FileList object
                 var reader = new FileReader();
@@ -338,7 +368,7 @@
                 reader.readAsText(files[0]);
             }
 
-            document.getElementById('reloaddata').addEventListener('change', reloadFileSelect, false);
+            //document.getElementById('reloaddata').addEventListener('change', reloadFileSelect, false);
         </script>
         <!--script language="javascript" type="text/javascript" src="./dist/pixi.js"></script-->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/6.0.2/browser/pixi.min.js"></script>
