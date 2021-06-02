@@ -19,7 +19,7 @@
     <!--button id="btnPause" class="btn btn-default"><span id="playpause">Pause</span></button-->
     <button id="btnReload" class="btn btn-default">Resimulate</button>
     Current Step: <span id="currentstep">0</span>
-    <button id="btnSaveData" class="btn btn-default">Save Data</button>
+    <button id="btnSaveData" class="btn btn-default">Save Everything</button>
     <button id="btnAllFinish" class="btn btn-default">End All Runs</button>
     <button id="btnQuickFinish" class="btn btn-default">End Current Run</button>
     <!--div>
@@ -28,7 +28,7 @@
     </div-->
     <div>
         <!--button id="reloadgrid" class="btn btn-default">Reload Grids</button-->
-        <label for="reloadgrid" class="btn">Reload Grid</label>
+        <label for="reloadgrid" class="btn">Reload Grids</label>
         <input id="reloadgrid" style="visibility:hidden;" type="file" name="files[]"></input>
     </div>
         <div class="container">
@@ -330,14 +330,14 @@
             function reloadFileSelectGrid(evt) {
                 var files = evt.target.files; // FileList object
                 var reader = new FileReader();
-
+console.log("now here");
                 // Closure to capture the file information.
                 reader.onload = function () {
                     text = reader.result;
                     console.log(reader.result.substring(0, 400));
                     var loadedStuff = JSON.parse(text);
                     ms = loadedStuff.ms;
-                    // Need to reload parameters in GUI
+                    updateMSToPage();
                     allStuff = loadedStuff.allStuff;
                 };
                 console.log('now there');
@@ -349,8 +349,10 @@
                 reader.readAsText(files[0]);
             }
 
-            document.getElementById('reloadgrid').addEventListener('change', reloadFileSelectGrid, false);
+            document.getElementById('reloadgrid').addEventListener('change', reloadFileSelectGrid, true);
 
+//        <label for="reloadgrid" class="btn">Reload Grids</label>
+//        <input id="reloadgrid" style="visibility:hidden;" type="file" name="files[]"></input>
 
             function reloadFileSelect(evt) {
                 var files = evt.target.files; // FileList object

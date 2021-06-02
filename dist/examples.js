@@ -438,10 +438,7 @@ function makeCoating() {
 
     //Particle placing coating generation
     if (!ms.gridFromCA) {
-      ms.radius = parseInt($("#radius").val(), 10);
       disc = makeDisc(ms.radius);
-      ms.noOfParticles = parseInt($("#noofparticles").val(), 10);
-      ms.noOfCuts = parseInt($("#noofcuts").val(), 10);
       insertParticles(disc,ms.radius);
     }
     // fill holes in binder with inhibitor while counting
@@ -594,8 +591,8 @@ function saveGrid(grid) {
 				'A' + Math.round(100*inhibitorAccessible/inhibitorTotal); */
 	ret = JSON.stringify(grid);
 	var BB = new Blob([ret], {type: "text/plain;charset=UTF-8"});
-//  saveAs(BB, name + ".txt");
-  saveAs(BB, fileNameStem + ".txt");
+//  saveAs(BB, name + ".json");
+  saveAs(BB, fileNameStem + ".json");
 }
 
 function setWorldPalette() {
