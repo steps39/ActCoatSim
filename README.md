@@ -1,3 +1,5 @@
+# ActCoatSim - Active Coating Simulator #
+
 Active corrosion protection of metals by primer(paint/coating) works by having a slightly soluble corrosion inhibitor embedded within the coating, such that if the coating system is damaged and the metal is exposed to a corrosive environment, then the inhibitor will leach from the primer and inhibit any further corrosion of the metal surface.  It was always assumed that the corrosin inhibitor leached through the polymeric binder, but recent work has found that the primary source of corrosion inhibitor is via transport through the pores left behind by previously dissolved corrosion inhbitor particles.
 
 ActCoatSim is a 2D simulation of the leaching of corrosion inhibitor from an active corrosion protection coating system which is immersed in a corrosive environment.  The primer is simiplified in that is consists of just the continuous polymeric binder and corrosion inhibitor particles.  The coating system can consist of the primer in contact with the metal to be protected, a top coat (which is considered to be inert) and a scribe (an area of damaged through whichthe metal is exposed to the environment).
@@ -30,7 +32,7 @@ The particles are generated as a particular shape (currently circles) of a size 
 
 # Simulation Parameters #
 
-A number of parameters of the simulation can be varied.  The **Inhibitor Density** and the **Inhibitor Solubility** (both in arbitary integer units), will control the speed of leaching as for a cell of inhibitor with an inhibitor density of 9 and an inhibitor solubility of 1, it will take 9 dissolution events for it to disolve, where if the inhibitor density was 1 then it would only require 1 dissolution event.  _As yet unimplemented, the **Diffusion Probability** and **Solubility Probability**, determine how likely diffusion or dissolution is to occur in a single step, 1 means every time, another way to slow down the various steps._
+A number of parameters of the simulation can be varied.  The **Inhibitor Density** and the **Inhibitor Solubility** (both in arbitary integer units), will control the speed of leaching as for a cell of inhibitor with an inhibitor density of 9 and an inhibitor solubility of 1, it will take 9 dissolution events for it to disolve, where if the inhibitor density was 1 then it would only require 1 dissolution event.  The **Diffusion Probability** and **Solubility Probability**, determine how likely diffusion or dissolution is to occur in a single step, 1 means every time, another way to slow down the various steps.
 
 If simulating a scribed coating then set **Loose from Top** and **Loose from Left** at least, **Loose from Bottom** could be considered as the protective interaction with the metal surface.
 
@@ -52,17 +54,17 @@ When you have set the parameters for your simulation, then pressed **Full Reset*
 
 # Button Function #
 
-_Not implemented - **Pause** / **Play** - will stop and start the current simulation._
-
-_Not implemented - **Regenerate** - will generate a new filled polymer and start a new simulation using the currently displayed parameter values, but will continue to plot on the same graph._
-
 **Full reset** - will discard all previous results, generate a new coating system and start a new simulation using the currently displayed parameter value, creating a new graph.
 
-_No implemented - **Save Data**._
+**Regenerate** - will use a previously generated set of coating systems to rerun the simulation based on the currently displayed Simulation Parameters and Simulations Controls values.
+
+_No implemented - **Save Everything** - saves microstructures, saves videos of animation, saves leaching data, save images of leaching graph and legend - if you don't want to save anything individual items can be selected in the Simulation Control tab._
 
 **End All Runs** - stop the current set of simulations, completing all saves if requested.
 
 **End Current Run** - stop the currernt simulation, saving the animation is requested.
+
+**Reload Grids** - will reload a previously generated set of coating structures which have been saved in a grid file - i.e. 2106021535PPW10R10N4.json - the filename tells you what is in the json file - so file name is date (digits 1-6 - yymmdd), time (digits - 7-10 - hhmm), type of microstructure (PP - particle place, CA - cellular automaton, DT - diffusion test), coating system parameters - depends on coating system.
 
 Inspired by and using the cellauto.js library - https://github.com/sanojian/cellauto a very clever small Javascript library.
 
