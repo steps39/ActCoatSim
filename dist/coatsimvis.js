@@ -12,7 +12,7 @@ var g_running = true;
 var g_saveAll = false;
 var maxFrames, maxLeached;
 var ms = {noSamples:5, manualInter:false, topWater:true, depthOfWater:10, topcoat:false, depthOfTopcoat:10, scribed:false, sizeOfScribe:10, diffusionTest:false,
-          gridFromCA:false, noStrucSteps:15, radius:10, noOfParticles:20, noOfCuts:4, minimumParticle:3, maximumParticle:10, minimumPVC:0.1, maximumPVC:1.0};
+          gridFromCA:false, noStrucSteps:15, square:false, radius:10, noOfParticles:20, noOfCuts:4, minimumParticle:3, maximumParticle:10, minimumPVC:0.1, maximumPVC:1.0};
 var sp = {inhibitorDensity:1, inhibitorSolubility:1, probDiffuse:1.0, probDissolve:1.0, topLeak:true, leftLeak:false, rightLeak:false, bottomLeak:false};
 var ac = {globalPlots:false, xSqrt:true, saveGrids:false, saveGraphs:false, captureAnimation:false, capturePlot:false, stepFrames:3, plotFrames:10, endFraction:0.5, noVisualUpdates:false};
 var g_quickFinish, g_allFinish, g_allClosed, rcoatingNo, inhibitorAccessible, inhibitorTotal;
@@ -174,6 +174,7 @@ console.log("updateMSToPage");
   $("#sizeofscribe").val(ms.sizeOfScribe);
   $("#gridfromca").prop("checked",ms.gridFromCA);
   $("#nostrucsteps").val(ms.noStrucSteps);
+  $("#square").val(ms.square);
   $("#radius").val(ms.radius);
   $("#noofparticles").val(ms.noOfParticles);
   $("#noofcuts").val(ms.noOfCuts);
@@ -195,6 +196,7 @@ function updateFromPage() {
   ms.sizeOfScribe = changeInt("#sizeofscribe");
   ms.gridFromCA = changeCheck("#gridfromca");
   ms.noStrucSteps = changeInt("#nostrucsteps");
+  ms.square = changeCheck("#square");
   ms.radius = changeInt("#radius");
   ms.noOfParticles = changeInt("#noofparticles");
   ms.noOfCuts = changeInt("#noofcuts");
@@ -380,6 +382,7 @@ console.log("setting up Animation");
   }
   drawGrid(pixels, world, stage, textures);
   renderer.render(stage);
+console.log("render 1 - ",frames);
 console.log("set up Animation");
 }
 
@@ -453,35 +456,27 @@ function loop() {
     firstTime = false;
   }
   if (g_running) {
-//console.log("into loop - again");
     // Draw before anything happens
     if (frames == 0) {
       if (ac.captureAnimation) {
-console.log("filling the holes");
         updateGrid(pixels, world, textures);
         stage.addChild(frameText);
         renderer.render(stage);
         gridCapturer.capture(renderer.view);
-console.log("filled the holes");
+console.log("render 2 - ",frames);
       }
     }
     world.step();
     leachProgress.push([frames, world.leached / world.coatingDry]);
      // limit speed of simulation
     if (frames % ac.stepFrames === 0) {
-      //        console.log("here we are running");
-      /*            world.step();
-            leachProgress.push([frames,world.leached/world.inhibitorTotal]);*/
       $("#currentstep").text(frames);
       if (!ac.noVisualUpdates) {
-
         updateGrid(pixels, world, textures);
         frameText.text = "#: " + frames;
         stage.addChild(frameText);
-        //        app.render(stage);
         renderer.render(stage);
-        //        capturer.capture(renderer.view);
-        //        renderer.render(stage);
+console.log("render 3 - ",frames);
       }
       if (frames % ac.plotFrames === 0) {
         var xmax,
@@ -567,26 +562,19 @@ console.log("filled the holes");
     ) {
       requestAnimationFrame(loop);
       if (ac.captureAnimation) {
-//console.log("rending");
-        renderer.render(stage);
         gridCapturer.capture(renderer.view);
-//console.log("rended");
       }
-//      plotCapturer.capture(myPlot);
     } else {
 //      $("#quickfinish").prop("checked", false);
       g_quickFinish = false;
       firstTime = true;
       requestAnimationFrame(loop);
       if (ac.captureAnimation) {
-console.log("stopping rending");
         renderer.render(stage);
+console.log("render 4 - ",frames);
         gridCapturer.capture(renderer.view);
         stopRecording(gridCapturer);
-console.log("stopped rending");
       }
-//      plotCapturer.capture(myPlot);
-//      stopRecording(plotCapturer);
       if ((ms.noSamples == (coatingNo + 1)) || g_allFinish) {
         g_allClosed = true;
         if (ac.capturePlot) {
@@ -742,6 +730,7 @@ function loadExample(example) {
 }
 
 function reloadExample(example) {
+  updateFromPage();
   multipleLeaches.push({ label: currentLabel, data: leachProgress });
   firstTime = true;
   leachProgress = [];

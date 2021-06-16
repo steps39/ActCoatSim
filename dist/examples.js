@@ -270,9 +270,8 @@ function updateSimpleGrid(pixels, world, textures) {
 }
 
 function makeDisc(radius) {
-  square = true;
   var disc = [];
-  if (!square) {
+  if (!ms.square) {
     //Set up square list
     r2 = radius * radius;
     var i2 = [];
@@ -458,7 +457,7 @@ function makeCoating() {
       }
     }
     genPVC = inhibitorTotal / (inhibitorTotal + binderTotal);
-console.log("tries - ",tries,"genPVC - ",genPVC);
+console.log("tries - ",tries," genPVC - ",genPVC," minimumPVC - ",ms.minimumPVC," maximumPVC - ",ms.maximumPVC,"ending - ",!(genPVC > ms.minimumPVC && genPVC < ms.maximumPVC));
     if(tries>10){
       break;
     }
