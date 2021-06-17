@@ -217,9 +217,9 @@ function countCells(particle,radius){
   return count;
 }
 
-function insertParticles(disc,radius){
+function insertParticles(disc,radius,noOfCuts,noOfParticles,partNoInc){
 //			Create particles
-  for (var l = 0; l < ms.noOfParticles; l++) {
+  for (var l = 0; l < noOfParticles; l++) {
     var particle = deepCopy(disc);
     touching = 1;
     attempts = 0;
@@ -227,7 +227,7 @@ function insertParticles(disc,radius){
     for (; touching != 0 && attempts < 1; ) {
       attempts += 1;
       particleInhibitor = discInhibitor;
-      particle = createParticle(radius,ms.noOfCuts,particle);
+      particle = createParticle(radius,noOfCuts,particle);
       var placingTry = 0;
       do {
         //Test for overlap of the particle inside the grid
@@ -241,7 +241,7 @@ function insertParticles(disc,radius){
 
 //CleverBit?          particle = hollowParticle(particle,radius);
 
-          placeParticle(particle,xcentre,ycentre,radius,l);
+          placeParticle(particle,xcentre,ycentre,radius,l + partNoInc);
           placedParticle = true;
         }
       } while (!placedParticle && placingTry < 1000);
@@ -305,16 +305,18 @@ function makeDisc(radius) {
   return disc;
 }
 
-function makeCoating() {
-  //First create binder
-  world = new CAWorld({
-    width: 96,
-    height: 64,
-    cellSize: 6,
-  });
-  setWorldPalette();
-  inhibitorTotal = 0;
-  binderTotal = 0;
+
+function makeCoating(coatWidth, coatHeight, coatCellSize) {
+  if (ms.noLayers===1){
+    grid = makeLayer(coatWidth, coatHeight, coatCellSize, ms.radius,  ms.noOfCuts, ms.minimumPVC, ms.maximumPVC, ms.noOfParticles, 0);
+  } else {
+    grid1 = makeLayer(coatWidth,ms.layer1Height,coatCellSize, ms.radius, ms.noOfCuts, ms.minimumPVC, ms.maximumPVC, ms.noOfParticles, 0);
+    particleID1 = particleID;
+    grid2 = makeLayer(coatWidth,ms.layer2Height,coatCellSize, ms.radius2, ms.noOfCuts2, ms.minimumPVC2, ms.maximumPVC2, ms.noOfParticles2, ms.noOfParticles);
+    particleID2 = particleID;
+    grid = [].concat(grid1,grid2);
+    particleID  = [].concat(particleID1,particleID2);
+  }
   topOfPrimer = 0;
   if (ms.topcoat) {
     topOfPrimer += ms.depthOfTopcoat;
@@ -326,9 +328,71 @@ function makeCoating() {
   } else {
     //ms.depthOfWater = 0;
   }
+  if (ms.topcoat) {
+    // fill the cell with topcoat
+    for (var y = ms.depthOfWater; y < ms.depthOfWater + ms.depthOfTopcoat; y++) {
+      for (var x = 0; x < coatWidth; x++) {
+        grid[y][x] = 1;
+      }
+    }
+  }
+  if (ms.topWater) {
+    for (var y = 0; y < ms.depthOfWater; y++) {
+      for (var x = 0; x < coatWidth; x++) {
+        grid[y][x] = 0;
+      }
+    }
+  }
+
+  if (ms.scribed) {
+    // scribe the coating
+    for (var y = 0; y < coatHeight; y++) {
+      for (var x = 0; x < ms.sizeOfScribe; x++) {
+        grid[y][x] = 0;
+      }
+    }
+  }
+  //Calculate real PVC now water / scribe added / layers appended
+  inhibitorTotal = 0;
+  binderTotal = 0;
+    if (ms.scribed) {
+      primerStart = ms.sizeOfScribe;
+    } else {
+      primerStart = 0;
+    }
+    for (var y = topOfPrimer; y < coatHeight; y++) {
+      for (var x = primerStart; x < coatWidth; x++) {
+        if (grid[y][x] === 2) {
+          inhibitorTotal += 1;
+        } else {
+          binderTotal += 1;
+        }
+      }
+    }
+console.log("Full coating - Binder Total - ",binderTotal,";  Inhibitor Total - ",inhibitorTotal);
   if (sp.inhibitorSolubility > sp.inhibitorDensity) {
     sp.inhibitorSolubility = sp.inhibitorDensity;
   }
+
+  if (ms.manualInter) {
+    if (g_running) {
+      changeRunningState();
+    }
+    requestAnimationFrame(manualStructure);
+  }
+}
+
+function makeLayer(coatWidth, coatHeight, coatCellSize, radius, noOfCuts, minimumPVC, maximumPVC, noOfParticles, partNoInc) {
+  //First create binder
+  world = new CAWorld({
+    width: coatWidth,
+    height: coatHeight,
+    cellSize: coatCellSize,
+  });
+  setWorldPalette();
+  var inhibitorTotal = 0;
+  var binderTotal = 0;
+
   var genPVC = -1.0;
 
   world.registerCellType(
@@ -397,7 +461,7 @@ function makeCoating() {
     function () {
       //init
       if (ms.gridFromCA) {
-        this.open = Math.random() > 0.45;
+        this.open = Math.random() > ms.probCA;
       } else {
         this.open = false;
       }
@@ -437,15 +501,16 @@ function makeCoating() {
 
     //Particle placing coating generation
     if (!ms.gridFromCA) {
-      disc = makeDisc(ms.radius);
-      insertParticles(disc,ms.radius);
+      disc = makeDisc(radius);
+      insertParticles(disc,radius,noOfCuts,noOfParticles,partNoInc);
     }
     // fill holes in binder with inhibitor while counting
-    if (ms.scribed) {
-      primerStart = ms.sizeOfScribe;
-    } else {
+//    if (ms.scribed) {
+//      primerStart = ms.sizeOfScribe;
+//    } else {
       primerStart = 0;
-    }
+//    }
+topOfPrimer=0;
     for (var y = topOfPrimer; y < world.height; y++) {
       for (var x = primerStart; x < world.width; x++) {
         if (grid[y][x] === 0) {
@@ -457,44 +522,15 @@ function makeCoating() {
       }
     }
     genPVC = inhibitorTotal / (inhibitorTotal + binderTotal);
-console.log("tries - ",tries," genPVC - ",genPVC," minimumPVC - ",ms.minimumPVC," maximumPVC - ",ms.maximumPVC,"ending - ",!(genPVC > ms.minimumPVC && genPVC < ms.maximumPVC));
+console.log("tries - ",tries," genPVC - ",genPVC," minimumPVC - ",minimumPVC," maximumPVC - ",maximumPVC,"ending - ",!(genPVC > minimumPVC && genPVC < maximumPVC));
     if(tries>10){
       break;
     }
-  } while (!(genPVC > ms.minimumPVC && genPVC < ms.maximumPVC));
-  if (ms.topcoat) {
-    // fill the cell with topcoat
-    for (var y = ms.depthOfWater; y < ms.depthOfWater + ms.depthOfTopcoat; y++) {
-      for (var x = 0; x < world.width; x++) {
-        grid[y][x] = 1;
-      }
-    }
-  }
-  if (ms.topWater) {
-    for (var y = 0; y < ms.depthOfWater; y++) {
-      for (var x = 0; x < world.width; x++) {
-        grid[y][x] = 0;
-      }
-    }
-  }
-
-  if (ms.scribed) {
-    // scribe the coating
-    for (var y = 0; y < world.height; y++) {
-      for (var x = 0; x < ms.sizeOfScribe; x++) {
-        grid[y][x] = 0;
-      }
-    }
-  }
-  if (ms.manualInter) {
-    if (g_running) {
-      changeRunningState();
-    }
-    requestAnimationFrame(manualStructure);
-  }
+  } while (!(genPVC > minimumPVC && genPVC < maximumPVC));
+  return grid;
 }
 
-    function countAccessible() {
+    function countAccessible(grid) {
     //NOW JUST CREATE A NEW COATING TO COUNT ACCESSIBLE INHIBITOR
     /*world = new CAWorld({
 		width: 96,
@@ -533,12 +569,16 @@ console.log("tries - ",tries," genPVC - ",genPVC," minimumPVC - ",ms.minimumPVC,
           for (i = 0; i <= 7; i++) {
             if (
               neighbors[i] !== null &&
-              neighbors[i].inhibitor == 0 &&
+              neighbors[i].cellType === "water" &&
               this.inhibitor != 0
             ) {
               inhibitorAccessible += 1;
+              world.grid[this.y][this.x] = new world.cellTypes.water(
+                this.x,
+                this.y
+              );
               this.inhibitor = 0;
-              //	return;
+              return;
             }
           }
         },
@@ -560,7 +600,7 @@ console.log("tries - ",tries," genPVC - ",genPVC," minimumPVC - ",ms.minimumPVC,
       },
     });
 
-
+//console.log("count accessible grid ",grid);
     // pass in our generated coating data
     world.initializeFromGrid(
       [
@@ -577,6 +617,7 @@ console.log("tries - ",tries," genPVC - ",genPVC," minimumPVC - ",ms.minimumPVC,
 //console.log("about to step");
       world.step();
     } while (previous != inhibitorAccessible);
+console.log("count accessible inhibitor ",inhibitorAccessible);
 //    resolve(inhibitorAccessible);
 //});
   }
@@ -672,12 +713,12 @@ world.palette.push('0,128,128,1');*/
   noParticleColours = world.palette.length - (sp.inhibitorDensity + 4);
 }
 
-function simulation() {
+function simulation(coatWidth, coatHeight,coatCellSize) {
     // NOW USE OUR CELL TO CREATE A NEW COATING CONTAINING INHIBITOR
     world = new CAWorld({
-      width: 96,
-      height: 64,
-      cellSize: 6,
+      width: coatWidth,
+      height: coatHeight,
+      cellSize: coatCellSize,
       clearRect: true,
     });
     setWorldPalette();

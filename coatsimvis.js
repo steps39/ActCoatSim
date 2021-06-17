@@ -11,10 +11,14 @@ var firstTime;
 var g_running = true;
 var g_saveAll = false;
 var maxFrames, maxLeached;
-var ms = {noSamples:5, manualInter:false, topWater:true, depthOfWater:10, topcoat:false, depthOfTopcoat:10, scribed:false, sizeOfScribe:10, diffusionTest:false,
-          gridFromCA:false, noStrucSteps:15, square:false, radius:10, noOfParticles:20, noOfCuts:4, minimumParticle:3, maximumParticle:10, minimumPVC:0.1, maximumPVC:1.0};
+var ms = {noSamples:5, manualInter:false, coatWidth:96, coatHeight:48, coatCellSize:6, noLayers:1, layer1Height:24, layer2Height:24,
+          topWater:true, depthOfWater:10, topcoat:false, depthOfTopcoat:10,
+          scribed:false, sizeOfScribe:10, diffusionTest:false, gridFromCA:false, noStrucSteps:15, probCA:0.45, 
+          square:false, radius:10, radius2:5, noOfParticles:20, noOfParticles2:20, noOfCuts:4, noOfCuts:4, minimumParticle:3, maximumParticle:10, minimumPVC:0.1, maximumPVC:1.0, minimumPVC2:0.1, maximumPVC2:1.0};
 var sp = {inhibitorDensity:1, inhibitorSolubility:1, probDiffuse:1.0, probDissolve:1.0, topLeak:true, leftLeak:false, rightLeak:false, bottomLeak:false};
-var ac = {globalPlots:false, xSqrt:true, saveGrids:false, saveGraphs:false, captureAnimation:false, capturePlot:false, stepFrames:3, plotFrames:10, endFraction:0.5, noVisualUpdates:false};
+var ac = {globalPlots:false, xSqrt:true, saveGrids:false, saveGraphs:false, captureAnimation:false, capturePlot:false, stepFrames:3, plotFrames:10,
+          endFraction:0.5, noVisualUpdates:false};
+var coatWidth = 96, coatHeight = 96, coatCellSize = 6;
 var g_quickFinish, g_allFinish, g_allClosed, rcoatingNo, inhibitorAccessible, inhibitorTotal;
 var g_grid;
 var loopFinished = false;
@@ -88,7 +92,6 @@ function generateFileNameStem() {
   zeroNumber(d.getDate(),2) +
   zeroNumber(d.getHours(),2) +
   zeroNumber(d.getMinutes(),2);
-  "R" + zeroNumber(Math.round(ms.radius),2);
   if (ms.diffusionTest) {
     name += "DT";
   } else {
@@ -111,6 +114,9 @@ function generateFileNameStem() {
     }
     if (!ms.gridFromCA) {
       name += "R" + Math.round(ms.radius) + "N" + ms.noOfCuts;
+      if (ms.noLayers === 2){
+        name += "R" + Math.round(ms.radius2) + "N" + ms.noOfCuts2;
+      }
     }
   }
   return name;
@@ -165,6 +171,8 @@ function updateMSToPage() {
 console.log("updateMSToPage");
   $("#nocoatings").val(ms.noSamples);
   $("#manualinter").prop("checked",ms.manualInter);
+  $("#coatwidth").val(ms.coatWidth);
+  $("#coatheight").val(ms.coatHeight);
   $("#diffusiontest").prop("checked",ms.diffusionTest);
   $("#waterontop").prop("checked",ms.topWater);
   $("#depthofwater").val(ms.depthOfWater);
@@ -174,19 +182,29 @@ console.log("updateMSToPage");
   $("#sizeofscribe").val(ms.sizeOfScribe);
   $("#gridfromca").prop("checked",ms.gridFromCA);
   $("#nostrucsteps").val(ms.noStrucSteps);
-  $("#square").val(ms.square);
-  $("#radius").val(ms.radius);
+  $("#square").prop("checked",ms.square);
+  $("#nolayers").val(ms.noLayers);
   $("#noofparticles").val(ms.noOfParticles);
+  $("#noofparticles2").val(ms.noOfParticles2);
+  $("#layer1height").val(ms.layer1height);
+  $("#layer2height").val(ms.layer2height);
+  $("#radius").val(ms.radius);
+  $("#radius2").val(ms.radius2);
   $("#noofcuts").val(ms.noOfCuts);
+  $("#noofcuts2").val(ms.noOfCuts2);
   $("#minparticle").val(ms.minimumParticle);
   $("#maxparticle").val(ms.maximumParticle);
   $("#minimumpvc").val(ms.minimumPVC);
   $("#maximumpvc").val(ms.maximumPVC);
+  $("#minimumpvc2").val(ms.minimumPVC2);
+  $("#maximumpvc2").val(ms.maximumPVC2);
 }
 
 function updateFromPage() {
   ms.noSamples = changeInt("#nocoatings");
   ms.manualInter = changeCheck("#manualinter");
+  ms.coatWidth = changeInt("#coatwidth");
+  ms.coatHeight = changeInt("#coatheight");
   ms.diffusionTest = changeCheck("#diffusiontest");
   ms.topWater = changeCheck("#waterontop");
   ms.depthOfWater = changeInt("#depthofwater");
@@ -197,13 +215,21 @@ function updateFromPage() {
   ms.gridFromCA = changeCheck("#gridfromca");
   ms.noStrucSteps = changeInt("#nostrucsteps");
   ms.square = changeCheck("#square");
-  ms.radius = changeInt("#radius");
+  ms.noLayers = changeInt("#nolayers");
   ms.noOfParticles = changeInt("#noofparticles");
+  ms.noOfParticles2 = changeInt("#noofparticles2");
+  ms.layer1Height = changeInt("#layer1height");
+  ms.layer2Height = changeInt("#layer2height");
+  ms.radius = changeInt("#radius");
+  ms.radius2 = changeInt("#radius2");
   ms.noOfCuts = changeInt("#noofcuts");
+  ms.noOfCuts2 = changeInt("#noofcuts2");
   ms.minimumParticle = changeInt("#minparticle");
   ms.maximumParticle = changeInt("#maxparticle");
   ms.minimumPVC = changeFloat("#minimumpvc");
   ms.maximumPVC = changeFloat("#maximumpvc");
+  ms.minimumPVC2 = changeFloat("#minimumpvc2");
+  ms.maximumPVC2 = changeFloat("#maximumpvc2");
   sp.inhibitorDensity = changeInt("#inhibitordensity");
   sp.inhibitorSolubility = changeInt("#inhibitorsolubility");
   sp.probDiffuse = changeFloat("#probdiff");
@@ -418,18 +444,20 @@ function loop() {
       frames = 0;
       leachProgress = [];
       leachProgress.push([0, 0]);
-      world = simulation();
+      world = simulation(ms.coatWidth, ms.coatHeight, ms.coatCellSize);
 //      world = makeTest();
       frames = 0;
       series += 1;
       leachProgress = [];
       leachProgress.push([0, 0]);
       world.leached = 0;
-      world.inhibitorTotal *= sp.inhibitorDensity;
-      world.inhibitorAccessible *= sp.inhibitorDensity;
-      world.coatingDry =
-        (world.height - world.depthOfWater) * world.width * sp.inhibitorDensity;
-      currentLabel =
+      world.binderTotal = binderTotal;
+      world.inhibitorTotal = inhibitorTotal;// * sp.inhibitorDensity;
+      world.inhibitorAccessible = inhibitorAccessible;// * sp.inhibitorDensity;
+/*      world.coatingDry =
+        (world.height - world.depthOfWater) * world.width;// * sp.inhibitorDensity;*/
+      world.coatingDry = world.binderTotal + world.inhibitorTotal;
+        currentLabel =
         "Inhibitor PVC: " +
         (world.inhibitorTotal / world.coatingDry).toPrecision(2) +
         "  Accessible: " +
@@ -463,11 +491,11 @@ function loop() {
         stage.addChild(frameText);
         renderer.render(stage);
         gridCapturer.capture(renderer.view);
-console.log("render 2 - ",frames);
+//console.log("render 2 - ",frames);
       }
     }
     world.step();
-    leachProgress.push([frames, world.leached / world.coatingDry]);
+    leachProgress.push([frames, world.leached / (world.coatingDry * sp.inhibitorDensity)]);
      // limit speed of simulation
     if (frames % ac.stepFrames === 0) {
       $("#currentstep").text(frames);
@@ -476,12 +504,12 @@ console.log("render 2 - ",frames);
         frameText.text = "#: " + frames;
         stage.addChild(frameText);
         renderer.render(stage);
-console.log("render 3 - ",frames);
+//console.log("render 3 - ",frames);
       }
       if (frames % ac.plotFrames === 0) {
         var xmax,
           ymax,
-          y = world.leached / world.coatingDry;
+          y = world.leached / (world.coatingDry * sp.inhibitorDensity);
         if (frames > maxFrames) {
           maxFrames = frames;
         }
@@ -557,7 +585,7 @@ console.log("render 3 - ",frames);
     frames++;
 //    g_allFinish = changeCheck("#allfinish");
     if (
-      (world.leached < ac.endFraction * world.inhibitorAccessible) &&
+      (world.leached < ac.endFraction * world.inhibitorAccessible * sp.inhibitorDensity) &&
       !g_quickFinish && !g_allFinish
     ) {
       requestAnimationFrame(loop);
@@ -598,8 +626,8 @@ console.log("render 4 - ",frames);
 function coatingBit(stuff) {
   for (let i = 0; i < ms.noSamples; i++) {
     console.log("About to make coating " + (i + 1));
-    makeCoating();
-    countAccessible();
+    makeCoating(ms.coatWidth, ms.coatHeight, ms.coatCellSize);
+    countAccessible(grid);
     var record = [];
     record.push(grid);
     record.push(particleID);
