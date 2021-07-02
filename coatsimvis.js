@@ -11,11 +11,14 @@ var firstTime;
 var g_running = true;
 var g_saveAll = false;
 var maxFrames, maxLeached;
+var particleType = 0;
+var noParticleTypes = 1;
 var ms = {noSamples:5, manualInter:false, coatWidth:96, coatHeight:48, coatCellSize:6, noLayers:1, layer1Height:24, layer2Height:24,
           topWater:true, depthOfWater:10, topcoat:false, depthOfTopcoat:10,
           scribed:false, sizeOfScribe:10, diffusionTest:false, gridFromCA:false, noStrucSteps:15, probCA:0.45, 
-          square:false, radius:10, radius2:5, noOfParticles:20, noOfParticles2:20, noOfCuts:4, noOfCuts:4, minimumParticle:3, maximumParticle:10, minimumPVC:0.1, maximumPVC:1.0, minimumPVC2:0.1, maximumPVC2:1.0};
-var sp = {inhibitorDensity:1, inhibitorSolubility:1, probDiffuse:1.0, probDissolve:1.0, topLeak:true, leftLeak:false, rightLeak:false, bottomLeak:false};
+          square:false, radius:[10], radius2:[5], noOfParticles:[20,5,6], noOfParticles2:[20], noOfCuts:[4], noOfCuts:[4],
+          minimumParticle:[3], maximumParticle:[10], minimumPVC:[0.1], maximumPVC:[1.0], minimumPVC2:[0.1], maximumPVC2:[1.0]};
+var sp = {inhibitorDensity:[1], inhibitorSolubility:[1], probDiffuse:[1.0], probDissolve:[1.0], topLeak:true, leftLeak:false, rightLeak:false, bottomLeak:false};
 var ac = {globalPlots:false, xSqrt:true, saveGrids:false, saveGraphs:false, captureAnimation:false, capturePlot:false, stepFrames:3, plotFrames:10,
           endFraction:0.5, noVisualUpdates:false};
 var coatWidth = 96, coatHeight = 96, coatCellSize = 6;
@@ -126,6 +129,7 @@ function generateFileNameSim(name) {
   if (ms.diffusionTest) {
     return name;
   } else {
+    
     name +=
       "ID" + zeroNumber(Math.round(sp.inhibitorDensity),2) +
       "IS" + zeroNumber(Math.round(sp.inhibitorSolubility),2) +
@@ -157,6 +161,21 @@ function generateFileNameVideo(name) {
 
 function changeInt(htmlObject) {
   return parseInt($(htmlObject).val(), 10);
+}
+
+function changeArray(htmlObject,minValue,maxValue) {
+  var str = $(htmlObject).val();
+  var values = str.split(",");
+  for (let index = 0; index < values.length; index++) {
+    var element = 1.0 * values[index];
+    if (element<minValue || element>maxValue) {
+      console.log("Correct - " + htmlObject + " an element is less than " + minValue + " or greater than " + maxValue);
+      break;
+    }
+    values[index] = element;
+  }
+  console.log(htmlObject + " " + values);
+  return values;
 }
 
 function changeFloat(htmlObject) {
@@ -216,24 +235,25 @@ function updateFromPage() {
   ms.noStrucSteps = changeInt("#nostrucsteps");
   ms.square = changeCheck("#square");
   ms.noLayers = changeInt("#nolayers");
-  ms.noOfParticles = changeInt("#noofparticles");
-  ms.noOfParticles2 = changeInt("#noofparticles2");
+  ms.noOfParticles = changeArray("#noofparticles",1,1000);
+  ms.noOfParticles2 = changeArray("#noofparticles2",1,1000);
   ms.layer1Height = changeInt("#layer1height");
   ms.layer2Height = changeInt("#layer2height");
-  ms.radius = changeInt("#radius");
-  ms.radius2 = changeInt("#radius2");
-  ms.noOfCuts = changeInt("#noofcuts");
-  ms.noOfCuts2 = changeInt("#noofcuts2");
-  ms.minimumParticle = changeInt("#minparticle");
-  ms.maximumParticle = changeInt("#maxparticle");
-  ms.minimumPVC = changeFloat("#minimumpvc");
-  ms.maximumPVC = changeFloat("#maximumpvc");
-  ms.minimumPVC2 = changeFloat("#minimumpvc2");
-  ms.maximumPVC2 = changeFloat("#maximumpvc2");
-  sp.inhibitorDensity = changeInt("#inhibitordensity");
-  sp.inhibitorSolubility = changeInt("#inhibitorsolubility");
-  sp.probDiffuse = changeFloat("#probdiff");
-  sp.probDissolve = changeFloat("#probsol");
+  ms.radius = changeArray("#radius",1,50);
+  ms.radius2 = changeArray("#radius2",1,50);
+  ms.noOfCuts = changeArray("#noofcuts",1,10);
+  ms.noOfCuts2 = changeArray("#noofcuts2",1,10);
+  ms.minimumParticle = changeArray("#minparticle",1,200);
+  ms.maximumParticle = changeArray("#maxparticle",1,200);
+  ms.minimumPVC = changeArray("#minimumpvc",0.01,1.0);
+  ms.maximumPVC = changeArray("#maximumpvc",0.01,1.0);
+  ms.minimumPVC2 = changeArray("#minimumpvc2",0.01,1.0);
+  ms.maximumPVC2 = changeArray("#maximumpvc2",0.01,1.0);
+//  sp.inhibitorDensity = changeInt("#inhibitordensity");
+  sp.inhibitorDensity = changeArray("#inhibitordensity",1,100);
+  sp.inhibitorSolubility = changeArray("#inhibitorsolubility",1,100);
+  sp.probDiffuse = changeArray("#probdiff",0,1);
+  sp.probDissolve = changeArray("#probsol",0,1);
   sp.topLeak = changeCheck("#topleak");
   sp.leftLeak = changeCheck("#leftleak");
   sp.rightLeak = changeCheck("#rightleak");
@@ -457,7 +477,7 @@ function loop() {
 /*      world.coatingDry =
         (world.height - world.depthOfWater) * world.width;// * sp.inhibitorDensity;*/
       world.coatingDry = world.binderTotal + world.inhibitorTotal;
-        currentLabel =
+      currentLabel =
         "Inhibitor PVC: " +
         (world.inhibitorTotal / world.coatingDry).toPrecision(2) +
         "  Accessible: " +
