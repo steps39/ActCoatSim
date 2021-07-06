@@ -39,7 +39,7 @@ var particleIDs;
 function createParticle(radius,noOfCuts,particle,discInhibitor){
   var particleInhibitor;
 //console.log("create particle ",particle);
-  if (noOfCuts) {
+  if (noOfCuts>0) {
     do {
       particleInhibitor = discInhibitor;
       for (var k = 0; k <= noOfCuts; k++) {
@@ -66,32 +66,11 @@ function createParticle(radius,noOfCuts,particle,discInhibitor){
         }
       }
     } while (particleInhibitor < 5);
-  }
+  }/* else {
+    return discInhibitor;
+  }*/
   return particle;
 }
-
-/*
-world.registerCellType(
-  "binder",
-  {
-    process: function (neighbors) {
-      var surrounding = this.countSurroundingCellsWithValue(
-        neighbors,
-        "wasOpen"
-      );
-      this.open = (this.wasOpen && surrounding >= 4) || surrounding >= 6;
-      //			this.open = 2;
-    },
-    reset: function () {
-      this.wasOpen = this.open;
-    },
-  },
-  function () {
-    //init
-    this.open = Math.random() > 0.45;
-  }
-);
-*/
 
 function surCell(neighbor) {
 //  console.log(neighbor.polymer);
@@ -169,6 +148,7 @@ function checkParticle(particle,xcentre,ycentre,radius){
       ) {
         if (!particle[radius+y][radius+x] && !grid[yyc][xxc]) {
           touching += 1;
+          return touching;
         }
       }
     }
@@ -190,17 +170,7 @@ function placeParticle(particle,xcentre,ycentre,radius,particleNo,particleType){
       ) {
         if (!particle[radius+y][radius+x] && grid[yyc][xxc]) {
           grid[yyc][xxc] = 0;
-  /*                  world.grid[yyc][xxc] = new world.cellTypes.inhibitor(
-            xxc,
-            yyc
-          );*/
           particleID[yyc][xxc] = particleNo;
-//????          if (pixiVersion > 4) {
-//????            pixels[xxc + yyc * world.width].texture = textures[particleNo];
-//????          } else {
-  //          console.log('updategraphics',x,y,world.width);
-//????            pixels[xxc + yyc * world.width].setTexture(textures[particleNo]);
-//????          }
         }
       }
     }
@@ -225,14 +195,16 @@ function insertParticles(disc, radius, noOfCuts, noOfParticles, partNoInc) {
   partExtra = 0;
   for (let pt = 0; pt < noParticleTypes; pt++) {
     for (var l = 0; l < noOfParticles[pt]; l++) {
-      var particle = deepCopy(disc);
+      var particle = deepCopy(disc[pt]);
+//console.log("disc length length "+particle.length+" "+disc[0].length);
+//console.log("particle length length "+particle.length+" "+disc[0].length);
       touching = 1;
       attempts = 0;
       placedParticle = true;
       for (; touching != 0 && attempts < 1;) {
         attempts += 1;
         particleInhibitor = discInhibitor[pt];
-        particle = createParticle(radius[pt], noOfCuts[pt], particle,particleInhibitor);
+        particle = createParticle(radius[pt], noOfCuts[pt], particle,particleInhibitor[pt]);
         var placingTry = 0;
         do {
           //Test for overlap of the particle inside the grid
@@ -291,13 +263,13 @@ function makeDisc(rradius) {
       //Make a circle
       discInhibitor[pt] = 0;
       for (var y = -radius; y <= radius; y++) {
-        disc[radius + y] = [];
+        disc[pt][radius + y] = [];
         for (var x = -radius; x <= radius; x++) {
           if (i2[Math.abs(y)] + i2[Math.abs(x)] <= r2) {
-            disc[radius + y][radius + x] = 0;
+            disc[pt][radius + y][radius + x] = 0;
             discInhibitor[pt] += 1;
           } else {
-            disc[radius + y][radius + x] = 1;
+            disc[pt][radius + y][radius + x] = 1;
           }
         }
       }
@@ -305,20 +277,23 @@ function makeDisc(rradius) {
       //Make a square
       discInhibitor[pt] = 0;
       for (var y = -radius; y <= radius; y++) {
-        disc[radius + y] = [];
+        disc[pt][radius + y] = [];
         for (var x = -radius; x <= radius; x++) {
-          disc[radius + y][radius + x] = 0;
+          disc[pt][radius + y][radius + x] = 0;
           discInhibitor[pt] += 1;
         }
       }
     }
   }
+//console.log("disc length length "+disc.length+" "+disc[0].length+disc[0][0].length);
   return disc;
 }
 
 
 function makeCoating(coatWidth, coatHeight, coatCellSize) {
   particleTypes = [];
+  inhibitorAccessible = [];
+  inhibitorTotal = [];
   if (ms.noLayers===1){
     grid = makeLayer(coatWidth, coatHeight, coatCellSize, ms.radius,  ms.noOfCuts, ms.minimumPVC, ms.maximumPVC, ms.noOfParticles, 0);
   } else {
@@ -434,11 +409,13 @@ function makeLayer(coatWidth, coatHeight, coatCellSize, radius, noOfCuts, minimu
     {
       getColor: function () {
         //return '89, 125, 206, ' + (this.inhibitor ? Math.max(0.3, this.inhibitor/9) : 0);
-        if (this.inhibitor[particleTypes[this.particleID]] == sp.inhibitorDensity[particleTypes[this.particleID]]) {
+        return 1;
+//        return world.particleColourStart[this.particleType] + this.inhibitor[this.particleType];
+/*        if (this.inhibitor[particleTypes[this.particleID]] == sp.inhibitorDensity[particleTypes[this.particleID]]) {
           return (this.particleID % noParticleColours) + sp.inhibitorDensity[particleTypes[this.particleID]] + 3;
         } else {
           return this.inhibitor[particleTypes[this.particleID]];
-        }
+        }*/
       },
     },
     function () {
@@ -526,6 +503,7 @@ function makeLayer(coatWidth, coatHeight, coatCellSize, radius, noOfCuts, minimu
     //Particle placing coating generation
     if (!ms.gridFromCA) {
       disc = makeDisc(radius);
+console.log("disc length length "+disc.length+" "+disc[0].length);
       insertParticles(disc,radius,noOfCuts,noOfParticles,partNoInc);
     }
     // fill holes in binder with inhibitor while counting
@@ -603,7 +581,9 @@ function countAccessible(grid) {
             this.inhibitor[this.particleType] != 0
           ) {
             inhibitorAccessible[this.particleType] += 1;
-//console.log("particleTypes[this.particleID]",this.particleType);
+//console.log("particleTypes[this.particleID]"+this.particleType+" "+this.x+" "+this.y);
+lastx = this.x;
+lasty = this.y;
             world.grid[this.y][this.x] = new world.cellTypes.water(
               this.x,
               this.y
@@ -619,6 +599,7 @@ function countAccessible(grid) {
       this.inhibitor = [];
       this.particleType = particleTypes[particleID[this.y][this.x]];
       this.inhibitor[this.particleType] = 1;
+//console.log("setting inhibitor *");
     }
   );
 
@@ -645,12 +626,16 @@ function countAccessible(grid) {
   );
 
 //  var previous = [-1];
+  var counter = 0;
   do {
     previous = inhibitorAccessible;
     //console.log("about to step");
     world.step();
-  } while (math.sum(previous) != math.sum(inhibitorAccessible));
-  console.log("count accessible inhibitor ", inhibitorAccessible);
+    if(math.sum(previous) == math.sum(inhibitorAccessible)){
+      counter += 1;
+    }
+  } while (counter<50);
+  console.log("count accessible inhibitor "+lastx+" "+lasty+" "+math.sum(inhibitorAccessible));
   //    resolve(inhibitorAccessible);
   //});
 }
@@ -691,15 +676,21 @@ function setWorldPalette() {
     } else {
       rainbow.setNumberRange(1, sp.inhibitorDensity[pt] + 1);
     }
-    if(pt === 0){
+    colourEnds = [['pink', 'purple'],['yellow', 'orange'],['lime', 'green'],['tomato','red']]
+/*    if(pt === 0){
       rainbow.setSpectrum('pink', 'purple');
     } else {
       rainbow.setSpectrum('yellow', 'orange');
-    }
+    }*/
+    rainbow.setSpectrum(colourEnds[pt][0],colourEnds[pt][1]);
     for (var i = 1; i <= sp.inhibitorDensity[pt] + 1; i++) {
-      world.palette.push(convertToRGB(rainbow.colourAt(i)) + ((i + 5) / (sp.inhibitorDensity[pt] + 5)));
+      world.palette.push(convertToRGB(rainbow.colourAt(i)));
+      // + ((i + 5) / (sp.inhibitorDensity[pt] + 5)));
+//      world.palette.push(convertToRGB(rainbow.colourAt(i)) + ((i + 5) / (sp.inhibitorDensity[pt] + 5)));
+console.log("colours "+convertToRGB(rainbow.colourAt(i)) + ((i + 5) / (sp.inhibitorDensity[pt] + 5)));
     }
   }
+
   //  Original colour range
   /*    for (var i = 1; i <= sp.inhibitorDensity; i++) {
       world.palette.push("189, 125, 206, " + (i + 5) / (sp.inhibitorDensity + 5));
@@ -741,8 +732,17 @@ function setWorldPalette() {
   }
 }
 
-function simulation(coatWidth, coatHeight,coatCellSize) {
-    // NOW USE OUR CELL TO CREATE A NEW COATING CONTAINING INHIBITOR
+function waterColour(inhibitors){
+  let colourNumber = colourNumbers;
+  for (let pt = 0; pt < inhibitors.length; pt++) {
+    colourNumber = colourNumbers[inhibitors[pt]];
+  }
+  return colourNumber
+}
+
+  function simulation(coatWidth, coatHeight,coatCellSize) {
+    //USE OUR CELL TO CREATE A NEW COATING CONTAINING INHIBITOR
+    
     world = new CAWorld({
       width: coatWidth,
       height: coatHeight,
@@ -754,6 +754,7 @@ function simulation(coatWidth, coatHeight,coatCellSize) {
     world.inhibitorTotal = [];
     world.leached = [];
     world.inhibitorAccessible = [];
+console.log("resetting world array sizes - ia "+world.inhibitorAccessible.length);
     for (let pt = 0; pt < noParticleTypes; pt++) {
       world.inhibitorTotal[pt] = inhibitorTotal[pt];
       world.leached[pt] = 0;
@@ -928,16 +929,16 @@ console.log("world.particleColourStart[this.particleType] + this.inhibitor[pt]",
 	return world;
 }
 
-function gridTest(height, width,radius) {
+function gridTest(height, width, radius) {
   var grid = [];
   var particleID = [];
   var record = [];
   for (var y = 0; y < height; y++) {
     grid[y] = [];
-//    particleID[y] = []
+    //    particleID[y] = []
     for (var x = 0; x < width; x++) {
       grid[y][x] = 0;
-//      particleID[y][x] = 1;
+      //      particleID[y][x] = 1;
     }
   }
   //			Make a disc in the middle
@@ -953,7 +954,7 @@ function gridTest(height, width,radius) {
     for (var x = -radius; x <= radius; x++) {
       if (i2[Math.abs(y)] + i2[Math.abs(x)] <= r2) {
         grid[y + ym][x + xm] = 1;
-//        particleID[y + ym][x + xm] = 1;
+        //        particleID[y + ym][x + xm] = 1;
         discInhibitor += 1;
       } else {
         grid[y + ym][x + xm] = 0;
@@ -981,10 +982,11 @@ function gridTest(height, width,radius) {
     inhibitorTotal,
     inhibitorAccessible,
   ]);
-  for (i=1;i<=ms.noSamples;i++) {
+console.log("gridTest");
+  for (i = 1; i <= ms.noSamples; i++) {
     allStuff.push(record);
   }
-//  g_grid = grid;
+  //  g_grid = grid;
 }
 
 

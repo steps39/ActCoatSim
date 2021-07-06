@@ -250,8 +250,8 @@ function updateFromPage() {
   ms.layer2Height = changeInt("#layer2height");
   ms.radius = changeArray("#radius",1,50);
   ms.radius2 = changeArray("#radius2",1,50);
-  ms.noOfCuts = changeArray("#noofcuts",1,10);
-  ms.noOfCuts2 = changeArray("#noofcuts2",1,10);
+  ms.noOfCuts = changeArray("#noofcuts",0,10);
+  ms.noOfCuts2 = changeArray("#noofcuts2",0,10);
   ms.minimumParticle = changeArray("#minparticle",1,200);
   ms.maximumParticle = changeArray("#maxparticle",1,200);
   ms.minimumPVC = changeArray("#minimumpvc",0.01,1.0);
@@ -505,54 +505,61 @@ function loop() {
   if (firstTime) {
 //console.log("into loop - first time");
     try {
+      var rrecord;
+      rrecord = [];
       coatingNo += 1;
       if (allStuff.length < coatingNo + 1) {
         return;
       }
       console.log("About to simulate system " + (coatingNo + 1));
-      // record = allStuff.shift();
-      record = allStuff[coatingNo];
+      // rrecord = allStuff.shift();
+      rrecord = allStuff[coatingNo];
       if (leachProgress[0].length > 1) {
         multipleLeaches=multipleLeaches.concat(stuffToPlot);
 //        multipleLeaches.push({ label: currentLabel, data: leachProgress });
       } else {
         multipleLeaches = [];
       }
-      grid = record[0];
-      particleID = record[1];
-      coatingDry = record[2][4];
-      binderTotal = record[2][5];
-      inhibitorTotal = record[2][6];
-      inhibitorAccessible = record[2][7];
-      console.log("Inhibitor total accessible ", inhibitorTotal,inhibitorAccessible);
+      grid = rrecord[0];
+      particleID = rrecord[1];
+      coatingDry = rrecord[2][4];
+      binderTotal = rrecord[2][5];
+      inhibitorTotal = rrecord[2][6];
+      inhibitorAccessible = rrecord[2][7];
+/*console.log("grid ",math.sum(grid));
+console.log("particleID ",math.sum(particleID));
+console.log("Inhibitor total accessible ", inhibitorTotal, inhibitorAccessible);
+console.log("Record[2]: ",coatingNo," ",rrecord[2][6]," ",rrecord[2][7]);
+console.log("AllStuff: ",coatingNo," ",allStuff[coatingNo][2][6]," ",allStuff[coatingNo][2][7]);*/
       firstTime = true;
       //?      g_running = 1;
       frames = 0;
-   leachProgress = [];
-   leachProgress.push([0, 0]);
+      leachProgress = [];
+      leachProgress.push([0, 0]);
       world = simulation(ms.coatWidth, ms.coatHeight, ms.coatCellSize);
-//      world = makeTest();
+      //      world = makeTest();
       frames = 0;
       series += 1;
       leachProgress = [];
+      world.leached = [];
       world.binderTotal = binderTotal;
-      world.coatingDry = binderTotal;
+      //      world.coatingDry = binderTotal;
+      world.inhibitorTotal = inhibitorTotal;// * sp.inhibitorDensity[pt];
+      world.inhibitorAccessible = inhibitorAccessible;// * sp.inhibitorDensity[pt];
       for (let pt = 0; pt < noParticleTypes; pt++) {
         leachProgress[pt] = [];
         leachProgress[pt].push([0, 0]);
         world.leached[pt] = 0;
-        world.inhibitorTotal[pt] = inhibitorTotal[pt];// * sp.inhibitorDensity[pt];
-        world.inhibitorAccessible[pt] = inhibitorAccessible[pt];// * sp.inhibitorDensity[pt];
-        world.coatingDry =
-                (world.height - world.depthOfWater) * world.width;// * sp.inhibitorDensity;
-
-//        world.coatingDry += world.inhibitorTotal[pt];
+        //        world.inhibitorTotal[pt] = inhibitorTotal[pt];// * sp.inhibitorDensity[pt];
+        //        world.inhibitorAccessible[pt] = inhibitorAccessible[pt];// * sp.inhibitorDensity[pt];
       }
+      world.coatingDry =
+        (world.height - world.depthOfWater) * (world.width);// - world.sizeOfScribe);// * sp.inhibitorDensity;
       currentLabel = [];
       for (let pt = 0; pt < noParticleTypes; pt++) {
-        currentLabel[pt] = "C"+ zeroNumber(coatingNo,2);
-        if(noParticleTypes>1) {
-          currentLabel[pt] += "P" + zeroNumber(pt,2);
+        currentLabel[pt] = "C" + zeroNumber(coatingNo, 2);
+        if (noParticleTypes > 1) {
+          currentLabel[pt] += "P" + zeroNumber(pt, 2);
         }
         currentLabel[pt] += ": " +
           "Inhibitor PVC: " +
@@ -688,6 +695,7 @@ function loop() {
     }
     frames++;
 //    g_allFinish = changeCheck("#allfinish");
+//console.log("End leaching criteria :"+coatingNo+" "+math.sum(world.leached)+" "+ac.endFraction+" "+math.sum(math.dotMultiply(world.inhibitorAccessible, sp.inhibitorDensity)));
     if (
 // Need to think about whether end point should be whole pigment or individual types
 // Does inhibitorAccessible just need to be number of cells but this is different to what is counted via leaching
@@ -700,6 +708,7 @@ function loop() {
       }
     } else {
 //      $("#quickfinish").prop("checked", false);
+console.log("IA: "+world.inhibitorAccessible+" ID: "+sp.inhibitorDensity);
       g_quickFinish = false;
       firstTime = true;
       requestAnimationFrame(loop);
@@ -734,9 +743,9 @@ function coatingBit(stuff) {
     console.log("About to make coating " + (i + 1));
     makeCoating(ms.coatWidth, ms.coatHeight, ms.coatCellSize);
     countAccessible(grid);
-    var record = [];
-    record.push(grid);
-    record.push(particleID);
+    var rrecord = [];
+    rrecord.push(grid);
+    rrecord.push(particleID);
     coatingDry = world.height - ms.depthOfWater;
     if (!ms.scribed) {
       coatingDry *= world.width;
@@ -745,41 +754,44 @@ function coatingBit(stuff) {
     };
     console.log("Before push - Inhibitor total accessible ", inhibitorTotal,inhibitorAccessible);
 
-    record.push([
+    rrecord.push([
       ms.minimumPVC,
       ms.maximumPVC,
       ms.minimumParticle,
       ms.maximumParticle,
       coatingDry,
       binderTotal,
-      inhibitorTotal,
-      inhibitorAccessible,
+      deepCopy(inhibitorTotal),
+      deepCopy(inhibitorAccessible),
     ]);
-    allStuff.push(record);
+    allStuff.push(rrecord);
     for (let pt = 0; pt < noParticleTypes; pt++) {
       console.log(
         "Inhibitor PVC: " +
-        (inhibitorTotal[pt] / (inhibitorTotal[pt] + binderTotal)).toPrecision(2) +
+        (inhibitorTotal[pt] / (math.sum(inhibitorTotal[pt]) + binderTotal)).toPrecision(2) +
         " Accessible: " +
         (inhibitorAccessible[pt] / inhibitorTotal[pt]).toPrecision(2)
       );
     }
+//console.log("Record[2]: ",i," ",rrecord[2][6]," ",rrecord[2][7]);
+//console.log("AllStuff: ",i," ",allStuff[i][2][6]," ",allStuff[i][2][7]);
   };
   if(ac.saveGrids){
     saveGrids();
   }
 };
 
-function wrappedLoop() {
+/*function wrappedLoop() {
   return new Promise((resolve) => {
     loop();
     resolve("Done");
   });
-}
+}*/
 
 function saveGrids() {
   var saveStuff = {
-    ms: ms, allStuff: allStuff
+    params : ms, info : allStuff
+//    ms: ms, allStuff: allStuff
   }
 //  ret = JSON.stringify(allStuff);
   ret = JSON.stringify(saveStuff);
@@ -789,14 +801,14 @@ function saveGrids() {
 }
 
 function loadGrids(allStuff) {
-  for (const record of allStuff) {
-    //      record = allStuff[i];
-    grid = record[0];
-    particleID = record[1];
-    coatingDry = record[2][4];
-    binderTotal = record[2][5];
-    inhibitorTotal = record[2][6];
-    inhibitorAccessible = record[2][7];
+  for (var rrecord of allStuff) {
+    //      rrecord = allStuff[i];
+    grid = rrecord[0];
+    particleID = rrecord[1];
+    coatingDry = rrecord[2][4];
+    binderTotal = rrecord[2][5];
+    inhibitorTotal = rrecord[2][6];
+    inhibitorAccessible = rrecord[2][7];
     console.log("Coating Dry " + coatingDry);
     console.log("Inhibitor accessible " + inhibitorAccessible);
     requestAnimationFrame(loop);
@@ -868,7 +880,7 @@ function loadExample(example) {
 //  $("#allfinish").prop("checked", false);
   g_allFinish = false;
   g_allClosed = false;
-  loop();
+ loop();
 }
 
 function reloadExample(example) {
