@@ -19,8 +19,8 @@ var ms = {noSamples:5, manualInter:false, coatWidth:96, coatHeight:48, coatCellS
           square:false, radius:[10], radius2:[5], noOfParticles:[20], noOfParticles2:[20], noOfCuts:[4], noOfCuts:[4],
           minimumParticle:[3], maximumParticle:[10], minimumPVC:[0.1], maximumPVC:[1.0], minimumPVC2:[0.1], maximumPVC2:[1.0]};
 var sp = {inhibitorDensity:[1], inhibitorSolubility:[1], probDiffuse:[1.0], probDissolve:[1.0], topLeak:true, leftLeak:false, rightLeak:false, bottomLeak:false};
-var ac = {globalPlots:false, xSqrt:true, saveGrids:false, saveGraphs:false, captureAnimation:false, capturePlot:false, stepFrames:3, plotFrames:10,
-          endFraction:0.5, noVisualUpdates:false};
+var ac = {globalPlots:false, xSqrt:true, cumulativePlots:true, saveGrids:false, saveGraphs:false, captureAnimation:false, capturePlot:false, 
+          stepFrames:3, plotFrames:10, endFraction:0.5, noVisualUpdates:false};
 var coatWidth = 96, coatHeight = 96, coatCellSize = 6;
 var g_quickFinish, g_allFinish, g_allClosed, rcoatingNo, inhibitorAccessible = [], inhibitorTotal = [];
 var g_grid;
@@ -228,7 +228,7 @@ console.log("updateMSToPage");
   $("#maximumpvc2").val(ms.maximumPVC2);
 }
 
-function updateFromPage() {
+function updateFromMSPage() {
   ms.noSamples = changeInt("#nocoatings");
   ms.manualInter = changeCheck("#manualinter");
   ms.coatWidth = changeInt("#coatwidth");
@@ -258,15 +258,46 @@ function updateFromPage() {
   ms.maximumPVC = changeArray("#maximumpvc",0.01,1.0);
   ms.minimumPVC2 = changeArray("#minimumpvc2",0.01,1.0);
   ms.maximumPVC2 = changeArray("#maximumpvc2",0.01,1.0);
-  sp.inhibitorDensity = changeArray("#inhibitordensity",1,100);
-  sp.inhibitorSolubility = changeArray("#inhibitorsolubility",1,100);
-  sp.probDiffuse = changeArray("#probdiff",0,1);
-  sp.probDissolve = changeArray("#probsol",0,1);
+  checkMultiInhibParams();
+}
+
+function updateSPToPage() {
+  console.log("updateSPToPage");
+  $("#inhibitordensity").val(sp.inhibitorDensity);
+  $("#inhibitorsolubility").val(sp.inhibitorSolubility);
+  $("#probdiff").val(sp.probDiffuse);
+  $("#probsol").val(sp.probDissolve);
+  $("#topleak").prop("checked", sp.topLeak);
+  $("#leftleak").prop("checked", sp.leftLeak);
+  $("#rightleak").prop("checked", sp.rightLeak);
+  $("#bottomleak").prop("checked", sp.bottomLeak);
+}
+
+function updateFromSPPage() {
+  sp.inhibitorDensity = changeArray("#inhibitordensity", 1, 100);
+  sp.inhibitorSolubility = changeArray("#inhibitorsolubility", 1, 100);
+  sp.probDiffuse = changeArray("#probdiff", 0, 1);
+  sp.probDissolve = changeArray("#probsol", 0, 1);
   sp.topLeak = changeCheck("#topleak");
   sp.leftLeak = changeCheck("#leftleak");
   sp.rightLeak = changeCheck("#rightleak");
   sp.bottomLeak = changeCheck("#bottomleak");
-  ac.globalPlots = changeCheck("#plotCheckbox");
+  checkMultiInhibParams();
+}
+
+function updateACToPage() {
+  $("#xsqrt").prop("checked",ac.xSqrt);
+  $("#savegrids").prop("checked",ac.saveGrids);
+  $("#savegraphs").prop("checked",ac.saveGraphs);
+  $("#captureanimation").prop("checked",ac.captureAnimation);
+  $("#captureplot").prop("checked",ac.capturePlot);
+  $val("#numFrames").val(ac.stepFrames);
+  $val("#numPlots").val(ac.plotFrames);
+  $val("#endfraction").val(ac.endFraction);
+  $("#noupdates").prop("checked",ac.noVisualUpdates);
+}
+
+function updateFromACPage() {
   ac.xSqrt = changeCheck("#xsqrt");
   ac.saveGrids = changeCheck("#savegrids");
   ac.saveGraphs = changeCheck("#savegraphs");
@@ -276,7 +307,12 @@ function updateFromPage() {
   ac.plotFrames = changeInt("#numPlots");
   ac.endFraction = changeFloat("#endfraction");
   ac.noVisualUpdates = changeCheck("#noupdates");
-  checkMultiInhibParams();
+}
+
+function updateFromPage() {
+  updateFromMSPage();
+  updateFromSPPage();
+  updateFromACPage();
 }
 
 function checkMultiInhibParams() {
@@ -312,9 +348,7 @@ function checkMultiInhibParams() {
   ms.minimumPVC2 = correctArrayLengths(noParticleTypes,ms.minimumPVC2);
   ms.maximumPVC2 = correctArrayLengths(noParticleTypes,ms.maximumPVC2);
   sp.inhibitorDensity = correctArrayLengths(noParticleTypes,sp.inhibitorDensity);
-console.log("Before "+sp.inhibitorSolubility);
   sp.inhibitorSolubility = correctArrayLengths(noParticleTypes,sp.inhibitorSolubility);
-console.log("After "+sp.inhibitorSolubility);
   sp.probDiffuse = correctArrayLengths(noParticleTypes,sp.probDiffuse);
   sp.probDissolve = correctArrayLengths(noParticleTypes,sp.probDissolve);
 }
@@ -361,6 +395,9 @@ window.onload = function () {
     updateFromPage();
     loadExample(g_currentExample);
     //?g_running = 1;
+  });
+  $("#btnSaveParams").on("click", function (evt) {
+    saveParameters();
   });
   $("#btnSaveData").on("click", function (evt) {
     saveEverything();
@@ -514,7 +551,7 @@ function loop() {
       console.log("About to simulate system " + (coatingNo + 1));
       // rrecord = allStuff.shift();
       rrecord = allStuff[coatingNo];
-      if (leachProgress[0].length > 1) {
+      if (leachProgress[0].length > 1){
         multipleLeaches=multipleLeaches.concat(stuffToPlot);
 //        multipleLeaches.push({ label: currentLabel, data: leachProgress });
       } else {
@@ -557,9 +594,9 @@ console.log("AllStuff: ",coatingNo," ",allStuff[coatingNo][2][6]," ",allStuff[co
         (world.height - world.depthOfWater) * (world.width);// - world.sizeOfScribe);// * sp.inhibitorDensity;
       currentLabel = [];
       for (let pt = 0; pt < noParticleTypes; pt++) {
-        currentLabel[pt] = "C" + zeroNumber(coatingNo, 2);
+        currentLabel[pt] = "C" + zeroNumber(coatingNo+1, 2);
         if (noParticleTypes > 1) {
-          currentLabel[pt] += "P" + zeroNumber(pt, 2);
+          currentLabel[pt] += "P" + zeroNumber(pt+1, 2);
         }
         currentLabel[pt] += ": " +
           "Inhibitor PVC: " +
@@ -575,7 +612,7 @@ console.log("AllStuff: ",coatingNo," ",allStuff[coatingNo][2][6]," ",allStuff[co
           "  Diss: " +
           sp.probDissolve[pt];
       };
-      console.log(currentLabel);
+//console.log(currentLabel);
 
       setupAnimation();
 
@@ -673,7 +710,7 @@ console.log("AllStuff: ",coatingNo," ",allStuff[coatingNo][2][6]," ",allStuff[co
           for (let pt = 0; pt < noParticleTypes; pt++) {
             stuffToPlot.push({label: currentLabel[pt],data: leachProgress[pt]});
           }
-          if (multipleLeaches.length == 0) {
+          if (multipleLeaches.length == 0 || !ac.cumulativePlots) {
             plotPlot = $.plot(
               $("#Graph"),
               stuffToPlot,
@@ -718,20 +755,21 @@ console.log("render 4 - ",frames);
         gridCapturer.capture(renderer.view);
         stopRecording(gridCapturer);
       }
-      if ((ms.noSamples == (coatingNo + 1)) || g_allFinish) {
-        g_allClosed = true;
+      if ((ms.noSamples == (coatingNo + 1)) || g_allFinish || !ac.cumulativePlots) {
+        if(ac.saveGraphs) {
+          saveCurrentData(coatingNo);
+        }
+        if ((ms.noSamples == (coatingNo + 1)) || g_allFinish) {
+          g_allClosed = true;
         if (ac.capturePlot) {
           if (ms.diffusionTest) {
             graphPicture('#Graph',(fileNameStem + "XYG"),coatingNo);
             graphPicture('#Legend',(fileNameStem + "XYL"),coatingNo);
-
           } else {
             graphPicture('#Graph',(fileNameStem+'XYG'),coatingNo);
             graphPicture('#Legend',(fileNameStem+'XYL'),coatingNo);
           }
-        }
-        if(ac.saveGraphs) {
-          saveCurrentData();
+          }
         }
       }
     };
@@ -788,6 +826,33 @@ function coatingBit(stuff) {
   });
 }*/
 
+function saveParams() {
+  var saveStuff = {
+    params1 : ms, params2 : sp, params3 : ac
+  }
+  ret = JSON.stringify(saveStuff);
+  var BB = new Blob([ret], { type: "text/plain;charset=UTF-8" });
+//saving
+  saveAs(BB, fileNameStem + "PARAMS.json");
+}
+
+function reloadData() {
+  //      reader = new FileReader();
+  //      reader.onload = function () { console.log(reader.result); };
+  //      var BB = new Blob([ret], {type: "text/plain;charset=UTF8"});
+  //      multipleLeaches = JSON.parse(BB.slice(contentType="text/plain;charset=UTF8"));
+  //BB = fetch('./fred.txt')
+  //  .then(response => response.json())
+  //  .then(jsonResponse => console.log(jsonResponse))  
+  //      var BB = new Blob([ret], {type: "text/plain;charset=UTF8"});
+  readTextFile("file:///X:/stuff1/jscellular/data/fred.txt", function (text) {
+    var data = JSON.parse(text);
+    console.log(data);
+    ms = data["params"];
+    multipleLeaches = data["info"];
+  });
+}
+
 function saveGrids() {
   var saveStuff = {
     params : ms, info : allStuff
@@ -834,7 +899,9 @@ function changeRunningState() {
 }
 
 function saveCurrentData() {
-  if (multipleLeaches.length == 0) {
+  var currentFilename = generateFileNameSim(fileNameStem);
+  if (multipleLeaches.length == 0 || !ac.cumulativePlots) {
+    currentFilename += "C" + zeroNumber(coatingNo,2);
     ret = JSON.stringify(stuffToPlot);
 //    ret = JSON.stringify({ label: currentLabel, data: leachProgress });
   } else {
@@ -843,9 +910,10 @@ function saveCurrentData() {
 //      multipleLeaches.concat({ label: currentLabel, data: leachProgress })
     );
   }
+  currentFilename += "GD" + ".json";
   var BB = new Blob([ret], { type: "text/plain;charset=UTF-8" });
 //saving
-  saveAs(BB, generateFileNameSim(fileNameStem) + "GD" + ".json");
+  saveAs(BB, currentFilename);
   //	multipleLeaches = JSON.parse(ret);
   //	multipleLeaches = JSON.parse(BB.slice(contentType="text/plain;charset=UTF8"));
 }

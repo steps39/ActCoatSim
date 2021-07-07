@@ -503,7 +503,7 @@ function makeLayer(coatWidth, coatHeight, coatCellSize, radius, noOfCuts, minimu
     //Particle placing coating generation
     if (!ms.gridFromCA) {
       disc = makeDisc(radius);
-console.log("disc length length "+disc.length+" "+disc[0].length);
+//console.log("disc length length "+disc.length+" "+disc[0].length);
       insertParticles(disc,radius,noOfCuts,noOfParticles,partNoInc);
     }
     // fill holes in binder with inhibitor while counting
@@ -524,7 +524,7 @@ console.log("disc length length "+disc.length+" "+disc[0].length);
       }
     }
     genPVC = math.sum(inhibitorTotal) / (math.sum(inhibitorTotal) + binderTotal);
-console.log("tries - ",tries," genPVC - ",genPVC," minimumPVC - ",minimumPVC," maximumPVC - ",maximumPVC,"ending - ",!(genPVC > minimumPVC && genPVC < maximumPVC));
+console.log("tries - ",tries," genPVC - ",genPVC);//," minimumPVC - ",minimumPVC," maximumPVC - ",maximumPVC,"ending - ",!(genPVC > minimumPVC && genPVC < maximumPVC));
     if(tries>10){
       break;
     }
@@ -534,12 +534,12 @@ console.log("tries - ",tries," genPVC - ",genPVC," minimumPVC - ",minimumPVC," m
 
 function countAccessible(grid) {
   //NOW JUST CREATE A NEW COATING TO COUNT ACCESSIBLE INHIBITOR
-/*  world = new CAWorld({
-  width: 96,
-  height: 64,
+  world = new CAWorld({
+  width: grid[0].length,
+  height: grid.length,
   cellSize: 6,
   clearRect: true
-});*/
+});
   for (let pt = 0; pt < noParticleTypes; pt++) {
     inhibitorAccessible[pt] = 0;
   }
@@ -625,6 +625,7 @@ lasty = this.y;
     grid
   );
 
+
 //  var previous = [-1];
   var counter = 0;
   do {
@@ -635,6 +636,7 @@ lasty = this.y;
       counter += 1;
     }
   } while (counter<50);
+  console.log("count gid "+grid.length+" "+grid[0].length+" "+world.height+" "+world.width);
   console.log("count accessible inhibitor "+lastx+" "+lasty+" "+math.sum(inhibitorAccessible));
   //    resolve(inhibitorAccessible);
   //});
@@ -687,7 +689,7 @@ function setWorldPalette() {
       world.palette.push(convertToRGB(rainbow.colourAt(i)));
       // + ((i + 5) / (sp.inhibitorDensity[pt] + 5)));
 //      world.palette.push(convertToRGB(rainbow.colourAt(i)) + ((i + 5) / (sp.inhibitorDensity[pt] + 5)));
-console.log("colours "+convertToRGB(rainbow.colourAt(i)) + ((i + 5) / (sp.inhibitorDensity[pt] + 5)));
+//console.log("colours "+convertToRGB(rainbow.colourAt(i)) + ((i + 5) / (sp.inhibitorDensity[pt] + 5)));
     }
   }
 
@@ -762,19 +764,27 @@ console.log("resetting world array sizes - ia "+world.inhibitorAccessible.length
     }
     world.binderTotal = binderTotal;
 
+    e = [];
+    for (let pt = 0; pt < noParticleTypes; pt++) {
+      e.push(pt);
+    }
+
     world.registerCellType(
       "water",
       {
         getColor: function () {
           //return '89, 125, 206, ' + (this.inhibitor ? Math.max(0.3, this.inhibitor/9) : 0);
           if (math.sum(this.inhibitor) > 0) {
-            for (let pt = 0; pt < noParticleTypes; pt++) {
-              if (this.inhibitor[pt] > 0) {
-                return world.particleColourStart[pt] + this.inhibitor[pt];
-console.log("world.particleColourStart[this.particleType] + this.inhibitor[pt]",world.particleColourStart[this.particleType] + this.inhibitor[pt]);
-              }/* else {
-              return this.inhibitor[pt];
-            }*/
+            if (noParticleTypes == 1) {
+              return world.particleColourStart[0] + this.inhibitor[0];
+            } else {
+              shuffleArray(e);
+              for (let pt = 0; pt < noParticleTypes; pt++) {
+                if (this.inhibitor[e[pt]] > 0) {
+                  return world.particleColourStart[e[pt]] + this.inhibitor[e[pt]];
+                  console.log("world.particleColourStart[this.particleType] + this.inhibitor[pt]", world.particleColourStart[this.particleType] + this.inhibitor[pt]);
+                }
+              }
             }
           }
           return 0;
