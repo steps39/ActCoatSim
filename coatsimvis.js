@@ -286,7 +286,9 @@ function updateFromSPPage() {
 }
 
 function updateACToPage() {
+  $("#globalplots").prop("checked",ac.globalPlots);
   $("#xsqrt").prop("checked",ac.xSqrt);
+  $("#cumulativeplots").prop("checked",ac.cumulativePlots);
   $("#savegrids").prop("checked",ac.saveGrids);
   $("#savegraphs").prop("checked",ac.saveGraphs);
   $("#captureanimation").prop("checked",ac.captureAnimation);
@@ -298,7 +300,9 @@ function updateACToPage() {
 }
 
 function updateFromACPage() {
+  ac.globalPlots = changeCheck("#globalplots")
   ac.xSqrt = changeCheck("#xsqrt");
+  ac.cumulativePlots = changeCheck("#cumulativeplots");
   ac.saveGrids = changeCheck("#savegrids");
   ac.saveGraphs = changeCheck("#savegraphs");
   ac.captureAnimation = changeCheck("#captureanimation");
@@ -424,8 +428,8 @@ window.onload = function () {
   $("#noupdates").on("change", function (evt) {
     ac.noVisualUpdates = changeCheck("#noupdates");
   });
-  $("#plotCheckbox").on("change", function (evt) {
-    ac.globalPlots = changeCheck("#plotCheckbox");
+  $("#globalplots").on("change", function (evt) {
+    ac.globalPlots = changeCheck("#globalplots");
   });
   $("#xsqrt").on("change", function (evt) {
     ac.xSqrt = changeCheck("#xsqrt");
@@ -551,7 +555,7 @@ function loop() {
       console.log("About to simulate system " + (coatingNo + 1));
       // rrecord = allStuff.shift();
       rrecord = allStuff[coatingNo];
-      if (leachProgress[0].length > 1){
+      if (leachProgress[0].length > 1 && ac.cumulativePlots){
         multipleLeaches=multipleLeaches.concat(stuffToPlot);
 //        multipleLeaches.push({ label: currentLabel, data: leachProgress });
       } else {
@@ -761,14 +765,14 @@ console.log("render 4 - ",frames);
         }
         if ((ms.noSamples == (coatingNo + 1)) || g_allFinish) {
           g_allClosed = true;
-        if (ac.capturePlot) {
-          if (ms.diffusionTest) {
-            graphPicture('#Graph',(fileNameStem + "XYG"),coatingNo);
-            graphPicture('#Legend',(fileNameStem + "XYL"),coatingNo);
-          } else {
-            graphPicture('#Graph',(fileNameStem+'XYG'),coatingNo);
-            graphPicture('#Legend',(fileNameStem+'XYL'),coatingNo);
-          }
+          if (ac.capturePlot) {
+            if (ms.diffusionTest) {
+              graphPicture('#Graph', (fileNameStem + "XYG"), coatingNo);
+              graphPicture('#Legend', (fileNameStem + "XYL"), coatingNo);
+            } else {
+              graphPicture('#Graph', (fileNameStem + 'XYG'), coatingNo);
+              graphPicture('#Legend', (fileNameStem + 'XYL'), coatingNo);
+            }
           }
         }
       }
@@ -918,14 +922,16 @@ function changeRunningState() {
 
 function saveCurrentData() {
   var currentFilename = generateFileNameSim(fileNameStem);
+//console.log("cumulativePlots ",coatingNo," ",ac.cumulativePlots);
   if (multipleLeaches.length == 0 || !ac.cumulativePlots) {
-    currentFilename += "C" + zeroNumber(coatingNo,2);
+//    multipleLeaches = [];
+    currentFilename += "C" + zeroNumber(coatingNo, 2);
     ret = JSON.stringify(stuffToPlot);
-//    ret = JSON.stringify({ label: currentLabel, data: leachProgress });
+    //    ret = JSON.stringify({ label: currentLabel, data: leachProgress });
   } else {
     ret = JSON.stringify(
       multipleLeaches.concat(stuffToPlot)
-//      multipleLeaches.concat({ label: currentLabel, data: leachProgress })
+      //      multipleLeaches.concat({ label: currentLabel, data: leachProgress })
     );
   }
   currentFilename += "GD" + ".json";
