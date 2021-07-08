@@ -35,6 +35,7 @@ It is possible to simulate a primer coating made up of 2 layers of different PVC
 # Microstructure Parameters 2 #
 
 These parameters are used by the particle packing approach which does not allow overlapping particles.  If you are simulating 2 layers, then you need set **Radius 2**, **No of particle cuts 2**, .. for the second layer.
+
 The particles are generated as a particular shape (currently circles or squares when **Square Particles** is checked) of a size defined by **Radius** which undergo a **No of Particle Cuts** to produce more realistic random particle shapes, if circles or quares are wanted then just set **No of Particle Cuts** to 0, upto **No of Particles** are produced.  Particles are packed until the particle volume concentration (PVC) is within the ranage **Minimum PVC** to **Maximum PVC**.  You may need to adjust the **No of Particles** to be able to achieve the desired PVC range. Not yet implemented is the ability restrict the range of the particles' sizes based on a **Minimum Particle Size** and a **Maximum Particle Size**.
 
 # Simulation Parameters #
@@ -54,6 +55,14 @@ The plot can either auto-scale based on the current point being plot being maxim
 The data generated during the coating generation and simulation can be saved - coating microstructures - **Save Generated Coatings**, leaching graphs - **Save Graphs**, movies of the cellular automaton - **Capture Animaton to Webm** and an image of the leaching graphs with separate legend - **Capture Plot to PNG**.
 
 The realtime display is controlled by interval between each displayed frame - **Number of Frames** and how often the graph is replotted - **Number of Plots x Number of Frames**.  All updates of animation and graph can be stopped - **No Visual Updates**.
+
+# Multiple Inhibitor Types #
+
+It is also possible to incorporate multiple inhibitor types with different properties, if you want to use mulitple particle then for example **Radius** just enter the values separated by a comma i.e 5,10. You don't have to set multiple values for all revelant parameters, as if you just enter 2 radii in **Radius** and only 1 value for **Inhibitor Density** then the program uses the single value for both particles.
+
+N.B. If you enter 2 values for say **Radius** and 3 for say **No of Particles**, the system will replicate the first value for all parameters with less than 3 parameters, so the 2nd **Radii** value will be ignored and the 1st will be replicated for all 3 inhibitors.
+
+All the obvious inhibitor parameters will take multiple parameters: **Radius**, **No of Particle Cuts**, **No of Particles**, **Minimum PVC**, **Inhibitor Density**, **Inhibitor Solubility**, **Diffusion Probability** and **Solubility Probability**.
 
 # Getting Started #
 
