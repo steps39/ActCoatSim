@@ -826,14 +826,32 @@ function coatingBit(stuff) {
   });
 }*/
 
-function saveParams() {
+function saveParameters() {
   var saveStuff = {
-    params1 : ms, params2 : sp, params3 : ac
+    ms : ms, sp : sp, ac : ac
   }
   ret = JSON.stringify(saveStuff);
   var BB = new Blob([ret], { type: "text/plain;charset=UTF-8" });
 //saving
   saveAs(BB, fileNameStem + "PARAMS.json");
+}
+
+function reloadParameters() {
+  //      reader = new FileReader();
+  //      reader.onload = function () { console.log(reader.result); };
+  //      var BB = new Blob([ret], {type: "text/plain;charset=UTF8"});
+  //      multipleLeaches = JSON.parse(BB.slice(contentType="text/plain;charset=UTF8"));
+  //BB = fetch('./fred.txt')
+  //  .then(response => response.json())
+  //  .then(jsonResponse => console.log(jsonResponse))  
+  //      var BB = new Blob([ret], {type: "text/plain;charset=UTF8"});
+  readTextFile("file:///X:/stuff1/jscellular/data/fred.txt", function (text) {
+    var data = JSON.parse(text);
+//    console.log(data);
+  ms = data["ms"];
+  sp = data["sp"];
+  ac = data["ac"];
+  });
 }
 
 function reloadData() {
