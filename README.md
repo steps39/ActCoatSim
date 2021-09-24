@@ -82,14 +82,8 @@ _No implemented - **Save Everything** - saves microstructures, saves videos of a
 
 **Reload Grids** - will reload a previously generated set of coating structures which have been saved in a grid file - i.e. 2106021535PPW10R10N4.json - the filename tells you what is in the json file - so file name is date (digits 1-6 - yymmdd), time (digits - 7-10 - hhmm), type of microstructure (PP - particle place, CA - cellular automaton, DT - diffusion test), coating system parameters - depends on coating system.
 
-Inspired by and using the cellauto.js library - https://github.com/sanojian/cellauto a very clever small Javascript library.
+Inspired by and using a modified verion of cellauto.js library - https://github.com/sanojian/cellauto a very clever small Javascript library.
 
-Copyright (c) [2020] [Simon R Gibbon]
+Copyright (c) [2021] [Simon R Gibbon]
 
-This project is open-source and licensed under the MIT License:
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+This project is open-source and is licensed under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or at your option any later version.
